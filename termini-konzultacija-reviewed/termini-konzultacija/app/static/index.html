@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Termini konzultacija</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div>
+        <strong>Termini konzultacija</strong>
+        <span class="muted">/ prijava na laboratorij</span>
+      </div>
+      <nav>
+        <a href="#auth">Auth</a>
+        <a href="#termini">Termini</a>
+        <a href="#admin">Admin</a>
+        <a href="/docs">Swagger</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="hero card">
+        <h1>Početni kostur projekta</h1>
+        <p>
+          Ovo je minimalni UI koji FastAPI servira iz <code>app/static</code> foldera.
+          Svaka osoba može kasnije dodati svoj dio bez uvođenja Reacta/Angulara.
+        </p>
+        <button id="health-button" type="button">Testiraj API /health</button>
+        <pre id="health-result">Klikni gumb za provjeru.</pre>
+      </section>
+
+      <section id="auth" class="grid">
+        <article class="card">
+          <h2>Login</h2>
+          <input type="email" placeholder="email" />
+          <input type="password" placeholder="password" />
+          <button type="button">TODO: Login</button>
+        </article>
+
+        <article class="card">
+          <h2>Register</h2>
+          <input type="email" placeholder="email" />
+          <input type="password" placeholder="password" />
+          <button type="button">TODO: Register</button>
+        </article>
+      </section>
+
+      <section id="termini" class="card">
+        <h2>Termini</h2>
+        <p class="muted">
+          Ovdje kasnije ide lista termina, popunjenost i gumbi za prijavu/odjavu.
+        </p>
+      </section>
+
+      <section id="admin" class="card">
+        <h2>Admin panel</h2>
+        <p class="muted">
+          Ovdje kasnije ide forma za kreiranje, uređivanje i brisanje termina.
+        </p>
+      </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>

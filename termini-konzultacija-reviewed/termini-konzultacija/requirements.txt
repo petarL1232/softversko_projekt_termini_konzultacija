@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+psycopg[binary]
+python-jose[cryptography]
+bcrypt
+python-multipart
+pytest
+httpx
+ruff
+black
