@@ -1,104 +1,97 @@
-from datetime import UTC, datetime
-from enum import StrEnum
+from typing import Optional
+from datetime import datetime
 
-from sqlmodel import Field, SQLModel
-
-
-class UserRole(StrEnum):
-    """Allowed user roles in the system."""
-
-    ADMIN = "admin"
-    USER = "user"
+from sqlmodel import (
+    SQLModel,
+    Field
+)
 
 
-class PrijavaStatus(StrEnum):
-    """Allowed signup statuses.
+class Office(SQLModel, table=True):
 
-    We keep cancelled signups instead of deleting them so the team can later
-    show a small audit/history if needed. For capacity calculations, count only
-    ACTIVE signups.
-    """
+    __tablename__ = "offices"
 
-    ACTIVE = "active"
-    CANCELLED = "cancelled"
+    office_id: Optional[int] = Field(
+        default=None,
+        primary_key=True
+    )
+
+    office_name: str
+    capacity: int
 
 
 class User(SQLModel, table=True):
-    """Database table for application users."""
 
-    id: int | None = Field(default=None, primary_key=True)
-    email: str = Field(index=True, unique=True)
+    __tablename__ = "users"
+
+    user_id: Optional[int] = Field(
+        default=None,
+        primary_key=True
+    )
+
+    first_name: str
+    last_name: str
+
+    email: str
     password_hash: str
-    role: UserRole = Field(default=UserRole.USER)
+
+    role: str
+
+    office_id: Optional[int] = Field(
+        default=None,
+        foreign_key="offices.office_id"
+    )
 
 
-class Termin(SQLModel, table=True):
-    """Database table for consultation/lab terms."""
+class Subject(SQLModel, table=True):
 
-    id: int | None = Field(default=None, primary_key=True)
-    naziv: str = Field(min_length=1, index=True)
-    opis: str | None = None
-    datum_vrijeme: datetime
-    kapacitet: int = Field(gt=0)
-    created_by_id: int | None = Field(default=None, foreign_key="user.id")
+    __tablename__ = "subjects"
 
+    subject_id: Optional[int] = Field(
+        default=None,
+        primary_key=True
+    )
 
-class Prijava(SQLModel, table=True):
-    """Database table connecting users and terms."""
-
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    termin_id: int = Field(foreign_key="termin.id")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    status: PrijavaStatus = Field(default=PrijavaStatus.ACTIVE)
+    name: str
+    description: str
 
 
-class HealthResponse(SQLModel):
-    status: str
-    app: str
+class ConsultationTerm(SQLModel, table=True):
+
+    __tablename__ = "consultation_terms"
+
+    term_id: Optional[int] = Field(
+        default=None,
+        primary_key=True
+    )
+
+    professor_id: int = Field(
+        foreign_key="users.user_id"
+    )
+
+    subject_id: int = Field(
+        foreign_key="subjects.subject_id"
+    )
+
+    start_time: datetime
+    end_time: datetime
 
 
-class RegisterRequest(SQLModel):
-    email: str = Field(min_length=3)
-    password: str = Field(min_length=6)
+class TermRegistration(SQLModel, table=True):
 
+    __tablename__ = "term_registrations"
 
-class LoginRequest(SQLModel):
-    email: str
-    password: str
+    registration_id: Optional[int] = Field(
+        default=None,
+        primary_key=True
+    )
 
+    term_id: int = Field(
+        foreign_key="consultation_terms.term_id"
+    )
 
-class TokenResponse(SQLModel):
-    access_token: str
-    token_type: str = "bearer"
+    student_id: int = Field(
+        foreign_key="users.user_id"
+    )
 
-
-class UserRead(SQLModel):
-    id: int
-    email: str
-    role: UserRole
-
-
-class TerminCreate(SQLModel):
-    naziv: str = Field(min_length=1)
-    opis: str | None = None
-    datum_vrijeme: datetime
-    kapacitet: int = Field(gt=0)
-
-
-class TerminRead(SQLModel):
-    id: int
-    naziv: str
-    opis: str | None
-    datum_vrijeme: datetime
-    kapacitet: int
-    broj_prijava: int = 0
-    slobodna_mjesta: int = 0
-
-
-class PopunjenostResponse(SQLModel):
-    termin_id: int
-    kapacitet: int
-    broj_prijava: int
-    slobodna_mjesta: int
-    popunjen: bool
+    registered_at: datetime
