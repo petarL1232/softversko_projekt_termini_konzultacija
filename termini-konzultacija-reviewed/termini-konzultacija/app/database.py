@@ -23,15 +23,7 @@ DATABASE_URL = (
 
 engine = create_engine(DATABASE_URL)
 
-
 def get_session():
 
-    return Session(engine)
-
-#def get_session() -> Generator[Session, None, None]:
-#    """FastAPI dependency that provides a database session."""
-#
-#   with Session(engine) as session:
-#        yield session
-# Ostalo od kostura, po potrebi zamijeniti postojeći get_session() Opet, ako je ovo antun dio 
-# ali vrlo je moguce da sam ja lud, ovo ovako funkcionira no valjda moze biti bolje..? - Ivano 
+    with Session(engine) as session:
+        yield session
