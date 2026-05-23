@@ -1,2 +1,0 @@
-# Petar dio
-"""Service helpers."""
