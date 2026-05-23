@@ -29,7 +29,7 @@ jobs:
 
       - name: Run health check test
         run: |
-          pip install pytest httpx fastapi
+          pip install -r requirements.txt
           pytest tests/test_health.py -v
 
       - name: Print logs on failure
