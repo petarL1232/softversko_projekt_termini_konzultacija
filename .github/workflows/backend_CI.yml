@@ -27,21 +27,11 @@ jobs:
           echo "App never became ready"
           exit 1
 
-      - name: Run health check test
+      - name: Run tests
         run: |
           pip install -r requirements.txt
-          pytest tests/test_health.py -v
+          pytest ${{ matrix.test-file }} -v
       
-      - name: Run Auth tests
-        run: |
-          pip install -r requirements.txt
-          pytest tests/test_auth.py -v
-
-      - name: Run Security tests
-        run: |
-          pip install -r requirements.txt
-          pytest tests/test_security.py -v
-
       - name: Print logs on failure
         if: failure()
         run: docker compose logs
