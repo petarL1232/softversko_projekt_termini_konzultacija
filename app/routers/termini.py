@@ -1,78 +1,149 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
 
-from app.models import TerminCreate
+from app.database import get_session
+from app.models import (
+    Prijava,
+    PrijavaStatus,
+    Termin,
+    TerminCreate,
+    TerminRead,
+    User,
+)
+from app.routers.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/termini", tags=["termini"])
 
 
-@router.get("")
-def list_termini() -> list[dict[str, object]]:
-    """Skeleton endpoint for listing terms.
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
 
-    TODO osoba 3:
-    - dohvatiti sve termine iz baze
-    - za svaki termin izracunati broj aktivnih prijava
-    - vratiti kapacitet, broj_prijava i slobodna_mjesta
-    """
+def _broj_aktivnih_prijava(session: Session, termin_id: int) -> int:
+    """Broji samo ACTIVE prijave za dani termin."""
+    prijave = session.exec(
+        select(Prijava).where(
+            Prijava.termin_id == termin_id,
+            Prijava.status == PrijavaStatus.ACTIVE,
+        )
+    ).all()
+    return len(prijave)
 
-    return []
 
-
-@router.get("/{termin_id}")
-def get_termin(termin_id: int) -> dict[str, object]:
-    """Skeleton endpoint for one term.
-
-    TODO osoba 3:
-    - ako termin ne postoji, vratiti 404
-    - ako postoji, vratiti podatke termina + popunjenost
-    """
-
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail=f"TODO: dohvatiti termin {termin_id}",
+def _termin_to_read(session: Session, termin: Termin) -> TerminRead:
+    """Pretvori Termin model u TerminRead s popunjenošću."""
+    broj = _broj_aktivnih_prijava(session, termin.id)
+    slobodna = termin.kapacitet - broj
+    return TerminRead(
+        id=termin.id,
+        naziv=termin.naziv,
+        opis=termin.opis,
+        datum_vrijeme=termin.datum_vrijeme,
+        kapacitet=termin.kapacitet,
+        broj_prijava=broj,
+        slobodna_mjesta=slobodna,
     )
 
 
-@router.post("", status_code=201)
-def create_termin(payload: TerminCreate) -> dict[str, object]:
-    """Skeleton endpoint for creating terms.
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
 
-    TODO osoba 3:
-    - dodati require_admin dependency
-    - validacija je djelomicno vec u TerminCreate modelu
-    - spremiti novi Termin u bazu
+@router.get("", response_model=list[TerminRead])
+def list_termini(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> list[TerminRead]:
+    """Dohvati sve termine s popunjenošću. Dostupno svim prijavljenim korisnicima."""
+    termini = session.exec(select(Termin)).all()
+    return [_termin_to_read(session, t) for t in termini]
+
+
+@router.get("/{termin_id}", response_model=TerminRead)
+def get_termin(
+    termin_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> TerminRead:
+    """Dohvati jedan termin po ID-u. Vraća 404 ako ne postoji."""
+    termin = session.get(Termin, termin_id)
+    if termin is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Termin s ID-om {termin_id} nije pronađen.",
+        )
+    return _termin_to_read(session, termin)
+
+
+@router.post("", response_model=TerminRead, status_code=status.HTTP_201_CREATED)
+def create_termin(
+    payload: TerminCreate,
+    session: Session = Depends(get_session),
+    admin: User = Depends(require_admin),
+) -> TerminRead:
+    """Kreiraj novi termin. Samo admin."""
+    novi_termin = Termin(
+        naziv=payload.naziv,
+        opis=payload.opis,
+        datum_vrijeme=payload.datum_vrijeme,
+        kapacitet=payload.kapacitet,
+        created_by_id=admin.id,
+    )
+    session.add(novi_termin)
+    session.commit()
+    session.refresh(novi_termin)
+    return _termin_to_read(session, novi_termin)
+
+
+@router.put("/{termin_id}", response_model=TerminRead)
+def update_termin(
+    termin_id: int,
+    payload: TerminCreate,
+    session: Session = Depends(get_session),
+    admin: User = Depends(require_admin),
+) -> TerminRead:
+    """Uredi postojeći termin. Samo admin. Vraća 404 ako ne postoji."""
+    termin = session.get(Termin, termin_id)
+    if termin is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Termin s ID-om {termin_id} nije pronađen.",
+        )
+
+    termin.naziv = payload.naziv
+    termin.opis = payload.opis
+    termin.datum_vrijeme = payload.datum_vrijeme
+    termin.kapacitet = payload.kapacitet
+
+    session.add(termin)
+    session.commit()
+    session.refresh(termin)
+    return _termin_to_read(session, termin)
+
+
+@router.delete("/{termin_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_termin(
+    termin_id: int,
+    session: Session = Depends(get_session),
+    admin: User = Depends(require_admin),
+) -> None:
+    """Obriši termin. Samo admin. Vraća 404 ako ne postoji.
+    
+    Briše i sve prijave vezane za taj termin.
     """
+    termin = session.get(Termin, termin_id)
+    if termin is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Termin s ID-om {termin_id} nije pronađen.",
+        )
 
-    return {
-        "message": "TODO: implementirati admin kreiranje termina",
-        "termin": payload.model_dump(),
-    }
+    # Briši prijave vezane za termin prije brisanja termina
+    prijave = session.exec(
+        select(Prijava).where(Prijava.termin_id == termin_id)
+    ).all()
+    for prijava in prijave:
+        session.delete(prijava)
 
-
-@router.put("/{termin_id}")
-def update_termin(termin_id: int, payload: TerminCreate) -> dict[str, object]:
-    """Skeleton endpoint for updating terms.
-
-    TODO osoba 3:
-    - dodati require_admin dependency
-    - pronaci termin ili vratiti 404
-    - promijeniti naziv/opis/datum_vrijeme/kapacitet
-    """
-
-    return {
-        "message": f"TODO: implementirati uređivanje termina {termin_id}",
-        "termin": payload.model_dump(),
-    }
-
-
-@router.delete("/{termin_id}")
-def delete_termin(termin_id: int) -> dict[str, object]:
-    """Skeleton endpoint for deleting terms.
-
-    TODO osoba 3:
-    - dodati require_admin dependency
-    - pronaci termin ili vratiti 404
-    - odluciti brisu li se i prijave na taj termin ili se blokira brisanje
-    """
-
-    return {"message": f"TODO: implementirati brisanje termina {termin_id}"}
+    session.delete(termin)
+    session.commit()
