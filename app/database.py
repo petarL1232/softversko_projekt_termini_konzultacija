@@ -8,7 +8,11 @@ engine = create_engine(settings.database_url, echo=False)
 
 
 def create_db_and_tables() -> None:
-    """Create database tables for local development/demo."""
+    """Create database tables for local development/demo.
+
+    Do not leave this as pass: FastAPI calls it on startup, and without it the
+    app has no tables in a fresh PostgreSQL database.
+    """
 
     SQLModel.metadata.create_all(engine)
 
