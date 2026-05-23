@@ -1,0 +1,41 @@
+# .github/workflows/health-check.yml
+name: Health Check
+
+on: [push, pull_request]
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and start services
+        run: docker compose up -d --build
+
+      - name: Wait for app to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health; then
+              echo "App is ready!"
+              exit 0
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          echo "App never became ready"
+          exit 1
+
+      - name: Run health check test
+        run: |
+          pip install pytest httpx fastapi
+          pytest tests/test_health.py -v
+
+      - name: Print logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down
