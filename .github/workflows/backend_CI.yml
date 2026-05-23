@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: |
           pip install -r requirements.txt
-          pytest ${{ matrix.test-file }} -v
+          pytest tests/ -v
       
       - name: Print logs on failure
         if: failure()
