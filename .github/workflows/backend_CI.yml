@@ -30,7 +30,7 @@ jobs:
       - name: Run health check test
         run: |
           pip install -r requirements.txt
-          pytest tests/test_health.py -v
+          pytest tests/ -v
 
       - name: Print logs on failure
         if: failure()
