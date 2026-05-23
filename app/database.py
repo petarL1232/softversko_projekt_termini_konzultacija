@@ -1,20 +1,33 @@
-from collections.abc import Generator
+import os
 
-from sqlmodel import Session, SQLModel, create_engine
+from dotenv import load_dotenv
 
-from app.config import settings
+from sqlmodel import (
+    Session,
+    create_engine
+)
 
-engine = create_engine(settings.database_url, echo=False)
+load_dotenv()
 
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
 
-def create_db_and_tables() -> None:
-    """Create database tables for local development/demo."""
+DATABASE_URL = (
+    f"postgresql://{DB_USER}:{DB_PASSWORD}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
-    SQLModel.metadata.create_all(engine)
+engine = create_engine(DATABASE_URL)
 
-
-def get_session() -> Generator[Session, None, None]:
-    """FastAPI dependency that provides a database session."""
+def get_session():
 
     with Session(engine) as session:
         yield session
+
+
+def create_db_and_tables(): 
+
+    pass        
