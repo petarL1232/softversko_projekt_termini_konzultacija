@@ -30,7 +30,7 @@ jobs:
       - name: Run health check test
         run: |
           pip install -r requirements.txt
-          pytest tests/health_check.py -v
+          pytest tests/test_health.py -v
       
       - name: Run Auth tests
         run: |
