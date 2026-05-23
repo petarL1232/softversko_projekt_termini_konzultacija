@@ -1,5 +1,5 @@
 # .github/workflows/health-check.yml
-name: Health Check
+name: Backend CI
 
 on: [push, pull_request]
 
@@ -30,7 +30,17 @@ jobs:
       - name: Run health check test
         run: |
           pip install -r requirements.txt
-          pytest tests/ -v
+          pytest tests/health_check.py -v
+      
+      - name: Run Auth tests
+        run: |
+          pip install -r requirements.txt
+          pytest tests/test_auth.py -v
+
+      - name: Run Security tests
+        run: |
+          pip install -r requirements.txt
+          pytest tests/test_security.py -v
 
       - name: Print logs on failure
         if: failure()
