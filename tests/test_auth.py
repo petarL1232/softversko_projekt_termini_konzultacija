@@ -18,6 +18,8 @@ def test_register_creates_user_without_password_hash() -> None:
         response = client.post(
             "/auth/register",
             json={
+                "first_name": "Test",
+                "last_name": "Student",
                 "email": email,
                 "password": "test123",
             },
@@ -28,8 +30,8 @@ def test_register_creates_user_without_password_hash() -> None:
     data = response.json()
 
     assert data["email"] == email
-    assert data["role"] == "user"
-    assert "id" in data
+    assert data["role"] == "student"
+    assert "user_id" in data
     assert "password_hash" not in data
 
 
@@ -116,6 +118,8 @@ def test_auth_me_with_valid_token_returns_current_user() -> None:
         client.post(
             "/auth/register",
             json={
+                "first_name": "Test",
+                "last_name": "Student",
                 "email": email,
                 "password": "test123",
             },
@@ -141,7 +145,10 @@ def test_auth_me_with_valid_token_returns_current_user() -> None:
     data = me_response.json()
 
     assert data["email"] == email
-    assert data["role"] == "user"
+    assert data["role"] == "student"
+    assert data["first_name"] == "Test"
+    assert data["last_name"] == "Student"
+    assert "user_id" in data
     assert "password_hash" not in data
 
 

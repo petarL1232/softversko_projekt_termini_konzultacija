@@ -1,69 +1,81 @@
 from datetime import UTC, datetime
-from enum import StrEnum
+from enum import Enum
 
 from sqlmodel import Field, SQLModel
 
+class HealthResponse(SQLModel):
+    status: str
+    service: str | None = None
 
-class UserRole(StrEnum):
-    """Allowed user roles in the system."""
+def utc_now() -> datetime:
+    """Return a timezone-neutral UTC timestamp for database fields."""
+
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+class UserRole(str, Enum):
+    """Application roles stored in the users.role column."""
 
     ADMIN = "admin"
-    USER = "user"
+    PROFESSOR = "professor"
+    STUDENT = "student"
 
 
-class PrijavaStatus(StrEnum):
-    """Allowed signup statuses.
+class Office(SQLModel, table=True):
+    __tablename__ = "offices"
 
-    We keep cancelled signups instead of deleting them so the team can later
-    show a small audit/history if needed. For capacity calculations, count only
-    ACTIVE signups.
-    """
-
-    ACTIVE = "active"
-    CANCELLED = "cancelled"
+    office_id: int | None = Field(default=None, primary_key=True)
+    office_name: str = Field(index=True, unique=True, max_length=50)
+    capacity: int = Field(gt=0)
 
 
 class User(SQLModel, table=True):
-    """Database table for application users."""
+    __tablename__ = "users"
 
-    id: int | None = Field(default=None, primary_key=True)
-    email: str = Field(index=True, unique=True)
+    user_id: int | None = Field(default=None, primary_key=True)
+    first_name: str = Field(max_length=50)
+    last_name: str = Field(max_length=50)
+    email: str = Field(index=True, unique=True, max_length=100)
     password_hash: str
-    role: UserRole = Field(default=UserRole.USER)
+    role: UserRole = Field(default=UserRole.STUDENT)
+    office_id: int | None = Field(default=None, foreign_key="offices.office_id")
+    created_at: datetime = Field(default_factory=utc_now)
 
 
-class Termin(SQLModel, table=True):
-    """Database table for consultation/lab terms."""
+class Subject(SQLModel, table=True):
+    __tablename__ = "subjects"
 
-    id: int | None = Field(default=None, primary_key=True)
-    naziv: str = Field(min_length=1, index=True)
-    opis: str | None = None
-    datum_vrijeme: datetime
-    kapacitet: int = Field(gt=0)
-    created_by_id: int | None = Field(default=None, foreign_key="user.id")
+    subject_id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True, max_length=100)
+    description: str | None = None
 
 
-class Prijava(SQLModel, table=True):
-    """Database table connecting users and terms."""
+class ConsultationTerm(SQLModel, table=True):
+    __tablename__ = "consultation_terms"
 
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    termin_id: int = Field(foreign_key="termin.id")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    status: PrijavaStatus = Field(default=PrijavaStatus.ACTIVE)
+    term_id: int | None = Field(default=None, primary_key=True)
+    professor_id: int = Field(foreign_key="users.user_id")
+    subject_id: int = Field(foreign_key="subjects.subject_id")
+    start_time: datetime
+    end_time: datetime
+    created_at: datetime = Field(default_factory=utc_now)
 
 
-class HealthResponse(SQLModel):
-    status: str
-    app: str
+class TermRegistration(SQLModel, table=True):
+    __tablename__ = "term_registrations"
+
+    registration_id: int | None = Field(default=None, primary_key=True)
+    term_id: int = Field(foreign_key="consultation_terms.term_id")
+    student_id: int = Field(foreign_key="users.user_id")
+    registered_at: datetime = Field(default_factory=utc_now)
+
+
+# Request/response schemas for auth.
 
 
 class RegisterRequest(SQLModel):
-    email: str = Field(min_length=3)
-    password: str = Field(min_length=6)
-
-
-class LoginRequest(SQLModel):
+    first_name: str = "Student"
+    last_name: str = "User"
     email: str
     password: str
 
@@ -74,31 +86,70 @@ class TokenResponse(SQLModel):
 
 
 class UserRead(SQLModel):
-    id: int
+    user_id: int
+    first_name: str
+    last_name: str
     email: str
     role: UserRole
+    office_id: int | None = None
 
 
-class TerminCreate(SQLModel):
-    naziv: str = Field(min_length=1)
-    opis: str | None = None
-    datum_vrijeme: datetime
-    kapacitet: int = Field(gt=0)
+# Request/response schemas for future consultation term endpoints.
 
 
-class TerminRead(SQLModel):
-    id: int
-    naziv: str
-    opis: str | None
-    datum_vrijeme: datetime
-    kapacitet: int
-    broj_prijava: int = 0
-    slobodna_mjesta: int = 0
+class OfficeCreate(SQLModel):
+    office_name: str
+    capacity: int = Field(gt=0)
 
 
-class PopunjenostResponse(SQLModel):
-    termin_id: int
-    kapacitet: int
-    broj_prijava: int
-    slobodna_mjesta: int
-    popunjen: bool
+class OfficeRead(SQLModel):
+    office_id: int
+    office_name: str
+    capacity: int
+
+
+class SubjectCreate(SQLModel):
+    name: str
+    description: str | None = None
+
+
+class SubjectRead(SQLModel):
+    subject_id: int
+    name: str
+    description: str | None = None
+
+
+class ConsultationTermCreate(SQLModel):
+    professor_id: int
+    subject_id: int
+    start_time: datetime
+    end_time: datetime
+
+
+class ConsultationTermRead(SQLModel):
+    term_id: int
+    professor_id: int
+    subject_id: int
+    start_time: datetime
+    end_time: datetime
+    created_at: datetime
+
+
+class TermRegistrationRead(SQLModel):
+    registration_id: int
+    term_id: int
+    student_id: int
+    registered_at: datetime
+
+
+class OccupancyResponse(SQLModel):
+    term_id: int
+    capacity: int
+    registered_students: int
+    free_places: int
+    full: bool
+
+
+# Temporary compatibility alias while old router skeleton is being renamed.
+# TODO: when termini.py is fully migrated, import ConsultationTermCreate directly.
+TerminCreate = ConsultationTermCreate
