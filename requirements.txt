@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlmodel
 psycopg[binary]
 python-jose[cryptography]
+python-dotenv
 bcrypt
 python-multipart
 pytest
