@@ -8,6 +8,7 @@ class HealthResponse(SQLModel):
     status: str
     service: str | None = None
 
+
 def utc_now() -> datetime:
     """Return a timezone-neutral UTC timestamp for database fields."""
 
