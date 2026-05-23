@@ -27,6 +27,14 @@ def normalize_email(email: str) -> str:
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
+def get_role_value(role: UserRole | str) -> str:
+    """Return role as plain string for JWT payloads and comparisons."""
+
+    if isinstance(role, UserRole):
+        return role.value
+    return role
+
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
@@ -68,7 +76,7 @@ def require_admin(
 ) -> User:
     """Dopusta pristup samo admin korisniku."""
 
-    if current_user.role != UserRole.ADMIN:
+    if get_role_value(current_user.role) != UserRole.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Samo admin ima pristup ovoj akciji.",
@@ -95,8 +103,8 @@ def register_user(
     4. Spremi korisnika u bazu.
     5. Vrati korisnika bez password_hash polja.
 
-    Obican register uvijek sstvara role="user".
-    Admin korisnika cemo za demo dodavati kroz seed podatke.
+    Obican register uvijek stvara role="student".
+    Admin i professor korisnike dodajemo kroz seed/demo podatke ili admin rute.
     """
 
     email = normalize_email(payload.email)
@@ -110,9 +118,12 @@ def register_user(
         )
 
     user = User(
+        first_name=payload.first_name.strip(),
+        last_name=payload.last_name.strip(),
         email=email,
         password_hash=hash_password(payload.password),
-        role=UserRole.USER,
+        role=UserRole.STUDENT,
+        office_id=None,
     )
 
     session.add(user)
@@ -155,7 +166,7 @@ def login_user(
 
     access_token = create_access_token(
         subject=user.email,
-        extra_claims={"role": user.role},
+        extra_claims={"role": get_role_value(user.role), "user_id": user.user_id},
     )
 
     return TokenResponse(access_token=access_token, token_type="bearer")
