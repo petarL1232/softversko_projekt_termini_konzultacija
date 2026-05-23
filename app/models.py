@@ -15,8 +15,8 @@ class PrijavaStatus(StrEnum):
     """Allowed signup statuses.
 
     We keep cancelled signups instead of deleting them so the team can later
-    show a small audit/history if needed. For capacity calculations, count only
-    ACTIVE signups.
+    show a small audit/history if needed. For capacity calculations, count
+    only ACTIVE signups.
     """
 
     ACTIVE = "active"
