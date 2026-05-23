@@ -4,7 +4,7 @@ name: Backend CI
 on: [push, pull_request]
 
 jobs:
-  health-check:
+  Backend_CI:
     runs-on: ubuntu-latest
 
     steps:
