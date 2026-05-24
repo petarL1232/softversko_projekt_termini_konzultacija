@@ -1,6 +1,5 @@
-from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
 from sqlalchemy import text
+from sqlmodel import Session
 
 from app.database import create_db_and_tables, engine
 from app.models import (

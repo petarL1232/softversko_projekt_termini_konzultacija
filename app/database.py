@@ -11,7 +11,6 @@ load_dotenv()
 
 def build_database_url() -> str:
 
-
     database_url = os.getenv("DATABASE_URL")
     if database_url:
         return database_url
@@ -44,6 +43,7 @@ def run_trigger_sql() -> None:
 
     with engine.begin() as connection:
         connection.execute(text(sql_script))
+
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)

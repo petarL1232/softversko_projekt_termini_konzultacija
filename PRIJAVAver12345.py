@@ -1,5 +1,3 @@
-
-
 """
 Osoba 4 – Prijave / odjave s konzultacijskih termina.
 

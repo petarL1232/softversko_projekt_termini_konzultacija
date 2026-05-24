@@ -8,7 +8,10 @@ from app.main import app
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _register_and_login(client: TestClient, email: str, password: str = "test123") -> str:
+
+def _register_and_login(
+    client: TestClient, email: str, password: str = "test123"
+) -> str:
     """Registriraj korisnika i vrati JWT token."""
     client.post(
         "/auth/register",
@@ -29,6 +32,7 @@ def _register_and_login(client: TestClient, email: str, password: str = "test123
 def _make_admin(client: TestClient, email: str) -> str:
     """Registriraj korisnika, postavi ga kao admina u bazi i vrati token."""
     from sqlmodel import Session, select
+
     from app.database import engine
     from app.models import User, UserRole
 
@@ -69,6 +73,7 @@ def _termin_payload(
 
 
 # ── Unit testovi ──────────────────────────────────────────────────────────────
+
 
 def test_get_termini_without_auth_returns_401() -> None:
     """GET /termini bez tokena treba vratiti 401."""
@@ -193,6 +198,7 @@ def test_get_termini_returns_list_type() -> None:
 
 
 # ── Integracijski testovi ──────────────────────────────────────────────────────
+
 
 def test_admin_crud_termin_full_flow() -> None:
     """

@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 
-from sqlmodel import SQLModel, Session, select
+from sqlmodel import Session, SQLModel, select
 
 from app.database import engine
 from app.models import ConsultationTerm, Office, Subject, User, UserRole
-
 
 DEFAULT_PASSWORD_HASH = "seed-only-password-hash-not-for-production"
 

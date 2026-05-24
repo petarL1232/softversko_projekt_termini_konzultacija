@@ -1,5 +1,3 @@
-
-
 # Osoba 4 – Testovi za prijave / odjave s konzultacijskih termina
 """
 Testovi pokrivaju sve endpointe iz app/routers/prijave.py:
@@ -520,9 +518,7 @@ class TestPopunjenostTermina:
         tokens = [_login(client, s.email, "student123") for s in students]
 
         for tok in tokens:
-            client.post(
-                f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok)
-            )
+            client.post(f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok))
 
         token = _login(client, students[0].email, "student123")
         response = client.get(
@@ -545,9 +541,7 @@ class TestPopunjenostTermina:
         tokens = [_login(client, s.email, "student123") for s in students]
 
         for tok in tokens:
-            client.post(
-                f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok)
-            )
+            client.post(f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok))
 
         token = _login(client, students[0].email, "student123")
         response = client.get(
@@ -582,9 +576,7 @@ class TestPopunjenostTermina:
         tokens = [_login(client, s.email, "student123") for s in students]
 
         for tok in tokens:
-            client.post(
-                f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok)
-            )
+            client.post(f"/termini/{term.term_id}/prijava", headers=_auth_headers(tok))
 
         # Popunjenost = 2/2
         r = client.get(
