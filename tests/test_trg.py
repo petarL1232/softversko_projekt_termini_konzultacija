@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.database import engine
 from app.models import (
