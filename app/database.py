@@ -3,7 +3,6 @@ from collections.abc import Generator
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
 load_dotenv()
@@ -41,8 +40,11 @@ def run_trigger_sql() -> None:
 
     sql_script = trigger_path.read_text(encoding="utf-8")
 
-    with engine.begin() as connection:
-        connection.execute(text(sql_script))
+    with engine.raw_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sql_script)
+
+        connection.commit()
 
 
 def create_db_and_tables() -> None:
