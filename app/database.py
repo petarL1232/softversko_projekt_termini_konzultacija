@@ -40,3 +40,23 @@ def get_session() -> Generator[Session, None, None]:
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+
+
+def create_default_admin() -> None:
+    from app.models import User, UserRole
+    from app.services.security import hash_password
+
+    with Session(engine) as session:
+        admin = session.query(User).filter_by(email="admin@example.com").first()
+        if not admin:
+            admin = User(
+                first_name="John",
+                last_name="Doe",
+                email="admin@example.com",
+                password_hash=hash_password("admin"),
+                role=UserRole.ADMIN,
+                office_id=None,
+            )
+
+            session.add(admin)
+            session.commit()
