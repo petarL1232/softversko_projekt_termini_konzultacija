@@ -69,7 +69,7 @@ def _get_term_or_404(session: Session, termin_id: int) -> ConsultationTerm:
 
 @router.get("/favicon.ico", include_in_schema=False)
 def favicon() -> Response:
-    static_dir = Path(__file__).resolve().parent.parent / "static"
+    static_dir = pathlib.Path(__file__).resolve().parent.parent / "static"
     fav = static_dir / "favicon.png"
     if fav.exists():
         return FileResponse(fav, media_type="image/png")
