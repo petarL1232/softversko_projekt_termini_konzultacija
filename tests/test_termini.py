@@ -36,8 +36,6 @@ def _make_admin(client: TestClient, email: str) -> str:
     from app.database import engine
     from app.models import User, UserRole
 
-#   token = _register_and_login(client, email)
-
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == email)).first()
         if user:
