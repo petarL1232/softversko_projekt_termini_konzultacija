@@ -9,7 +9,6 @@ from app.models import (
     OccupancyResponse,
     TermRegistration,
     User,
-    UserRole,
 )
 from app.routers.auth import get_current_user, require_admin
 
