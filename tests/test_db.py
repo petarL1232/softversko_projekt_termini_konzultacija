@@ -21,6 +21,7 @@ from app.models import (
 
 # --- UserRole ---
 
+
 def test_user_role_values() -> None:
     assert UserRole.ADMIN == "admin"
     assert UserRole.PROFESSOR == "professor"
@@ -35,6 +36,7 @@ def test_user_role_is_str() -> None:
 
 # --- HealthResponse ---
 
+
 def test_health_response_with_status_only() -> None:
     h = HealthResponse(status="ok")
     assert h.status == "ok"
@@ -47,6 +49,7 @@ def test_health_response_with_service() -> None:
 
 
 # --- RegisterRequest ---
+
 
 def test_register_request_defaults() -> None:
     r = RegisterRequest(email="test@example.com", password="secret")
@@ -69,6 +72,7 @@ def test_register_request_custom_names() -> None:
 
 # --- TokenResponse ---
 
+
 def test_token_response_default_type() -> None:
     t = TokenResponse(access_token="abc123")
     assert t.token_type == "bearer"
@@ -80,6 +84,7 @@ def test_token_response_custom_type() -> None:
 
 
 # --- UserRead ---
+
 
 def test_user_read_without_office() -> None:
     u = UserRead(
@@ -107,6 +112,7 @@ def test_user_read_with_office() -> None:
 
 # --- OfficeCreate / OfficeRead ---
 
+
 def test_office_create() -> None:
     o = OfficeCreate(office_name="A101", capacity=10)
     assert o.office_name == "A101"
@@ -119,6 +125,7 @@ def test_office_read() -> None:
 
 
 # --- SubjectCreate / SubjectRead ---
+
 
 def test_subject_create_without_description() -> None:
     s = SubjectCreate(name="Matematika")
@@ -137,6 +144,7 @@ def test_subject_read() -> None:
 
 
 # --- ConsultationTermCreate / Read ---
+
 
 def test_consultation_term_create() -> None:
     start = datetime(2025, 6, 1, 10, 0)
@@ -167,6 +175,7 @@ def test_consultation_term_read() -> None:
 
 # --- TermRegistrationRead ---
 
+
 def test_term_registration_read() -> None:
     now = utc_now()
     r = TermRegistrationRead(
@@ -180,6 +189,7 @@ def test_term_registration_read() -> None:
 
 
 # --- OccupancyResponse ---
+
 
 def test_occupancy_response_not_full() -> None:
     o = OccupancyResponse(
@@ -206,6 +216,7 @@ def test_occupancy_response_full() -> None:
 
 
 # --- TerminCreate alias ---
+
 
 def test_termin_create_is_alias_for_consultation_term_create() -> None:
     assert TerminCreate is ConsultationTermCreate
