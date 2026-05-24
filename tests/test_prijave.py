@@ -1,3 +1,5 @@
+
+
 # Osoba 4 – Testovi za prijave / odjave s konzultacijskih termina
 """
 Testovi pokrivaju sve endpointe iz app/routers/prijave.py:
@@ -18,15 +20,9 @@ from sqlmodel import Session, SQLModel, StaticPool, create_engine
 # Postavi SQLite PRIJE importa app modula da engine ne pokuša spajanje na Postgres
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 
-from app.main import app  # noqa: E402
 from app.database import get_session  # noqa: E402
-from app.models import (  # noqa: E402
-    ConsultationTerm,
-    Office,
-    Subject,
-    User,
-    UserRole,
-)
+from app.main import app  # noqa: E402
+from app.models import ConsultationTerm, Office, Subject, User, UserRole  # noqa: E402
 from app.services.security import hash_password  # noqa: E402
 
 # ---------------------------------------------------------------------------
