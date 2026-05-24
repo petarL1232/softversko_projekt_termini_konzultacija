@@ -157,6 +157,8 @@ def odjavi_se_s_termina(
 
     Ako postoji, briše zapis i vraća poruku potvrde.
     """
+    # Provjeri postoji li termin (vraća 404 ako ne postoji)
+    _get_term_or_404(session, termin_id)
 
     # Pronađi prijavu za ovog korisnika na ovom terminu
     reg = session.exec(
@@ -197,6 +199,11 @@ def moje_prijave(
     Ako termin iz nekog razloga ne postoji (obrisana baza?),
     polje "termin" će biti None umjesto da pukne request.
     """
+    regs = session.exec(
+        select(TermRegistration).where(
+            TermRegistration.student_id == current_user.user_id
+        )
+    ).all()
 
     # Dohvati sve prijave za ovog korisnika
     regs = session.exec(

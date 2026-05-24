@@ -2,7 +2,7 @@ import os
 from collections.abc import Generator
 
 from dotenv import load_dotenv
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import Session, SQLModel, create_engine
 
 load_dotenv()
 
