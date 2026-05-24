@@ -9,7 +9,6 @@ Endpointi:
 """
 
 import pathlib
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from sqlmodel import Session, select
