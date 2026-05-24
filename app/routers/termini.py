@@ -7,6 +7,7 @@ from app.models import (
     ConsultationTermCreate,
     ConsultationTermRead,
     OccupancyResponse,
+    Subject,
     TermRegistration,
     User,
 )
@@ -22,10 +23,10 @@ router = APIRouter(prefix="/termini", tags=["termini"])
 
 def _get_office_capacity(session: Session, term: ConsultationTerm) -> int:
     """Dohvati kapacitet ureda profesora."""
+    from app.models import Office
+
     professor = session.get(User, term.professor_id)
     if professor and professor.office_id:
-        from app.models import Office
-
         office = session.get(Office, professor.office_id)
         if office:
             return office.capacity
@@ -109,7 +110,9 @@ def get_termin(
 
 
 @router.post(
-    "", response_model=ConsultationTermRead, status_code=status.HTTP_201_CREATED
+    "",
+    response_model=ConsultationTermRead,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_termin(
     payload: ConsultationTermCreate,
@@ -117,16 +120,12 @@ def create_termin(
     admin: User = Depends(require_admin),
 ) -> ConsultationTermRead:
     """Kreiraj novi termin. Samo admin ili profesor."""
-    # Provjeri postoji li profesor
     profesor = session.get(User, payload.professor_id)
     if profesor is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Profesor s ID-om {payload.professor_id} nije pronađen.",
         )
-
-    # Provjeri postoji li predmet
-    from app.models import Subject
 
     predmet = session.get(Subject, payload.subject_id)
     if predmet is None:
@@ -135,7 +134,6 @@ def create_termin(
             detail=f"Predmet s ID-om {payload.subject_id} nije pronađen.",
         )
 
-    # Provjeri da je start_time prije end_time
     if payload.start_time >= payload.end_time:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -200,7 +198,6 @@ def delete_termin(
             detail=f"Termin s ID-om {termin_id} nije pronađen.",
         )
 
-    # Briši registracije vezane za termin
     registracije = session.exec(
         select(TermRegistration).where(TermRegistration.term_id == termin_id)
     ).all()
