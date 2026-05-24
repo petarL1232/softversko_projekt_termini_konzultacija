@@ -9,6 +9,7 @@ Endpointi:
 """
 
 import pathlib
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from sqlmodel import Session, select
@@ -16,8 +17,8 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models import (
     ConsultationTerm,
-    Office,
     OccupancyResponse,
+    Office,
     TermRegistration,
     TermRegistrationRead,
     User,
