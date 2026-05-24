@@ -1,7 +1,5 @@
+"""Osoba 4 – Testovi za prijave / odjave s konzultacijskih termina.
 
-
-# Osoba 4 – Testovi za prijave / odjave s konzultacijskih termina
-"""
 Testovi pokrivaju sve endpointe iz app/routers/prijave.py:
   POST /termini/{termin_id}/prijava   – prijava studenta na termin
   DELETE /termini/{termin_id}/prijava – odjava studenta s termina
