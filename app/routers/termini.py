@@ -9,7 +9,6 @@ from app.models import (
     OccupancyResponse,
     TermRegistration,
     User,
-    UserRole,
 )
 from app.routers.auth import get_current_user, require_admin
 
@@ -20,11 +19,13 @@ router = APIRouter(prefix="/termini", tags=["termini"])
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _get_office_capacity(session: Session, term: ConsultationTerm) -> int:
     """Dohvati kapacitet ureda profesora."""
     professor = session.get(User, term.professor_id)
     if professor and professor.office_id:
         from app.models import Office
+
         office = session.get(Office, professor.office_id)
         if office:
             return office.capacity
@@ -54,6 +55,7 @@ def _termin_to_read(session: Session, term: ConsultationTerm) -> ConsultationTer
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.get("", response_model=list[ConsultationTermRead])
 def list_termini(
@@ -106,7 +108,9 @@ def get_termin(
     return _termin_to_read(session, termin)
 
 
-@router.post("", response_model=ConsultationTermRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ConsultationTermRead, status_code=status.HTTP_201_CREATED
+)
 def create_termin(
     payload: ConsultationTermCreate,
     session: Session = Depends(get_session),
@@ -123,6 +127,7 @@ def create_termin(
 
     # Provjeri postoji li predmet
     from app.models import Subject
+
     predmet = session.get(Subject, payload.subject_id)
     if predmet is None:
         raise HTTPException(
