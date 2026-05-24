@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 
 from sqlmodel import Field, SQLModel
+
 
 class HealthResponse(SQLModel):
     status: str
@@ -13,7 +14,7 @@ def utc_now() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """Application roles stored in the users.role column."""
 
     ADMIN = "admin"
