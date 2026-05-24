@@ -1,18 +1,18 @@
 # tests/test_models.py
-from datetime import UTC, datetime
+from datetime import datetime
 
 from app.models import (
     ConsultationTermCreate,
     ConsultationTermRead,
     HealthResponse,
+    OccupancyResponse,
     OfficeCreate,
     OfficeRead,
-    OccupancyResponse,
     RegisterRequest,
     SubjectCreate,
     SubjectRead,
-    TermRegistrationRead,
     TerminCreate,
+    TermRegistrationRead,
     TokenResponse,
     UserRead,
     UserRole,
