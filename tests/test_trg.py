@@ -1,7 +1,9 @@
+import pytest
 from sqlalchemy import text
-from sqlmodel import Session
+from sqlalchemy.exc import DBAPIError
+from sqlmodel import Session, select
 
-from app.database import create_db_and_tables, engine
+from app.database import engine
 from app.models import (
     ConsultationTerm,
     Office,
@@ -12,28 +14,26 @@ from app.models import (
 )
 
 
-def print_result(name: str, success: bool, error: str | None = None) -> None:
-    if success:
-        print(f"[PASS] {name}")
-    else:
-        print(f"[FAIL] {name}")
-        if error:
-            print(f"       {error}")
-
-
-def reset_database(session: Session) -> None:
-    session.exec(text("DELETE FROM term_registrations"))
-    session.exec(text("DELETE FROM consultation_terms"))
-    session.exec(text("DELETE FROM subjects"))
-    session.exec(text("DELETE FROM users"))
-    session.exec(text("DELETE FROM offices"))
-
+def clean_database(session: Session) -> None:
+    session.execute(text("DELETE FROM term_registrations"))
+    session.execute(text("DELETE FROM consultation_terms"))
+    session.execute(text("DELETE FROM subjects"))
+    session.execute(text("DELETE FROM users"))
+    session.execute(text("DELETE FROM offices"))
     session.commit()
 
 
-def create_test_data(session: Session) -> tuple[User, User, Subject]:
+@pytest.fixture
+def session():
+    with Session(engine) as session:
+        clean_database(session)
+        yield session
+        session.rollback()
+
+
+def create_professor(session: Session) -> User:
     office = Office(
-        office_name="Test Office",
+        office_name="Test office",
         capacity=5,
     )
 
@@ -42,105 +42,107 @@ def create_test_data(session: Session) -> tuple[User, User, Subject]:
     session.refresh(office)
 
     professor = User(
-        first_name="Profesor",
-        last_name="Test",
+        first_name="Test",
+        last_name="Professor",
         email="prof@test.com",
-        password_hash="12345678",
+        password_hash="hash",
         role=UserRole.PROFESSOR,
         office_id=office.office_id,
     )
 
+    session.add(professor)
+    session.commit()
+    session.refresh(professor)
+
+    return professor
+
+
+def create_student(session: Session) -> User:
     student = User(
         first_name="Student",
-        last_name="Test",
+        last_name="User",
         email="student@test.com",
-        password_hash="12345678",
+        password_hash="hash",
         role=UserRole.STUDENT,
     )
 
+    session.add(student)
+    session.commit()
+    session.refresh(student)
+
+    return student
+
+
+def create_subject(session: Session) -> Subject:
     subject = Subject(
-        name="Test Subject",
-        description="Test Description",
+        name="Databases",
+        description="Test subject",
     )
 
-    session.add(professor)
-    session.add(student)
     session.add(subject)
-
     session.commit()
-
-    session.refresh(professor)
-    session.refresh(student)
     session.refresh(subject)
 
-    return professor, student, subject
+    return subject
 
 
-def test_professor_consultation_creation(session: Session) -> ConsultationTerm:
-    professor, _, subject = create_test_data(session)
+def create_term(
+    session: Session,
+    professor: User,
+    subject: Subject,
+) -> ConsultationTerm:
+    from datetime import datetime, timedelta
 
     term = ConsultationTerm(
         professor_id=professor.user_id,
         subject_id=subject.subject_id,
-        start_time="2026-06-01 09:00:00",
-        end_time="2026-06-01 10:00:00",
+        start_time=datetime.now(),
+        end_time=datetime.now() + timedelta(hours=1),
     )
 
     session.add(term)
     session.commit()
     session.refresh(term)
-
-    print_result(
-        "Professor can create consultation term",
-        True,
-    )
 
     return term
 
 
-def test_student_cannot_create_consultation(session: Session) -> None:
-    _, student, subject = create_test_data(session)
+def test_professor_consultation_creation(session: Session):
+    professor = create_professor(session)
+    subject = create_subject(session)
 
-    try:
-        invalid_term = ConsultationTerm(
-            professor_id=student.user_id,
-            subject_id=subject.subject_id,
-            start_time="2026-06-02 09:00:00",
-            end_time="2026-06-02 10:00:00",
-        )
+    term = create_term(session, professor, subject)
 
-        session.add(invalid_term)
-        session.commit()
-
-        print_result(
-            "Student cannot create consultation term",
-            False,
-            "Trigger did not stop invalid insert",
-        )
-
-    except Exception as error:
-        session.rollback()
-
-        print_result(
-            "Student cannot create consultation term",
-            True,
-            str(error),
-        )
+    assert term.term_id is not None
 
 
-def test_duplicate_registration_trigger(session: Session) -> None:
-    professor, student, subject = create_test_data(session)
+def test_student_cannot_create_consultation(session: Session):
+    student = create_student(session)
+    subject = create_subject(session)
 
-    term = ConsultationTerm(
-        professor_id=professor.user_id,
+    from datetime import datetime, timedelta
+
+    invalid_term = ConsultationTerm(
+        professor_id=student.user_id,
         subject_id=subject.subject_id,
-        start_time="2026-06-03 09:00:00",
-        end_time="2026-06-03 10:00:00",
+        start_time=datetime.now(),
+        end_time=datetime.now() + timedelta(hours=1),
     )
 
-    session.add(term)
-    session.commit()
-    session.refresh(term)
+    session.add(invalid_term)
+
+    with pytest.raises(DBAPIError):
+        session.commit()
+
+    session.rollback()
+
+
+def test_duplicate_registration_trigger(session: Session):
+    professor = create_professor(session)
+    student = create_student(session)
+    subject = create_subject(session)
+
+    term = create_term(session, professor, subject)
 
     registration = TermRegistration(
         term_id=term.term_id,
@@ -150,85 +152,35 @@ def test_duplicate_registration_trigger(session: Session) -> None:
     session.add(registration)
     session.commit()
 
-    try:
-        duplicate_registration = TermRegistration(
-            term_id=term.term_id,
-            student_id=student.user_id,
-        )
+    duplicate = TermRegistration(
+        term_id=term.term_id,
+        student_id=student.user_id,
+    )
 
-        session.add(duplicate_registration)
+    session.add(duplicate)
+
+    with pytest.raises(DBAPIError):
         session.commit()
 
-        print_result(
-            "Duplicate registration prevention",
-            False,
-            "Duplicate registration was allowed",
-        )
-
-    except Exception as error:
-        session.rollback()
-
-        print_result(
-            "Duplicate registration prevention",
-            True,
-            str(error),
-        )
+    session.rollback()
 
 
-def test_invalid_time_range(session: Session) -> None:
-    professor, _, subject = create_test_data(session)
+def test_invalid_time_range(session: Session):
+    professor = create_professor(session)
+    subject = create_subject(session)
 
-    try:
-        invalid_term = ConsultationTerm(
-            professor_id=professor.user_id,
-            subject_id=subject.subject_id,
-            start_time="2026-06-04 11:00:00",
-            end_time="2026-06-04 10:00:00",
-        )
+    from datetime import datetime, timedelta
 
-        session.add(invalid_term)
+    invalid_term = ConsultationTerm(
+        professor_id=professor.user_id,
+        subject_id=subject.subject_id,
+        start_time=datetime.now(),
+        end_time=datetime.now() - timedelta(hours=1),
+    )
+
+    session.add(invalid_term)
+
+    with pytest.raises(DBAPIError):
         session.commit()
 
-        print_result(
-            "Invalid time range prevention",
-            False,
-            "Invalid time range was allowed",
-        )
-
-    except Exception as error:
-        session.rollback()
-
-        print_result(
-            "Invalid time range prevention",
-            True,
-            str(error),
-        )
-
-
-def main() -> None:
-    create_db_and_tables()
-
-    with Session(engine) as session:
-        reset_database(session)
-
-        print("\n=== RUNNING DATABASE TESTS ===\n")
-
-        test_professor_consultation_creation(session)
-
-        reset_database(session)
-
-        test_student_cannot_create_consultation(session)
-
-        reset_database(session)
-
-        test_duplicate_registration_trigger(session)
-
-        reset_database(session)
-
-        test_invalid_time_range(session)
-
-        print("\n=== TESTS FINISHED ===\n")
-
-
-if __name__ == "__main__":
-    main()
+    session.rollback()
