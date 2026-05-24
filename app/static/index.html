@@ -8,8 +8,6 @@
   <title>Termini konzultacija</title>
   <link rel="stylesheet" href="/static/style.css?v=auth-ui-v2" />
   <script defer src="/static/script.js?v=auth-ui-v2"></script>
-  <link rel="stylesheet" href="/static/termini_admin.css" />
-  <script defer src="/static/termini_admin.js"></script>
 </head>
 
 <body>
@@ -23,6 +21,7 @@
       <span id="navbar-current-user" class="user-pill">Niste prijavljeni</span>
       <a href="#auth">Auth</a>
       <a href="#terms">Termini</a>
+      <a href="#prijave">Moje prijave</a>
       <a href="#admin">Admin</a>
       <a href="/docs" target="_blank" rel="noreferrer">Swagger</a>
     </nav>
@@ -116,18 +115,33 @@
     <section id="terms" class="card">
       <div class="section-header">
         <div>
-          <h2>Termini</h2>
+          <h2>Termini konzultacija</h2>
           <p class="muted">
-            Ovaj prikaz je samo priprema za dio osobe koja radi termine.
-            Ako endpoint <code>GET /termini</code> postoji, prikazat će se
-            osnovni JSON odgovor.
+            Prijavi se kako biste vidjeli i prijavili se na termine.
           </p>
         </div>
         <button id="load-terms-button" type="button" class="secondary-button">
           Učitaj termine
         </button>
       </div>
-      <pre id="terms-result">Termini još nisu učitani.</pre>
+      <div id="termini-lista"></div>
+      <pre id="terms-result" style="display:none"></pre>
+    </section>
+
+    <!-- ── OSOBA 4 – Moje prijave ── -->
+    <section id="prijave" class="card">
+      <div class="section-header">
+        <div>
+          <h2>Moje prijave</h2>
+          <p class="muted">
+            Termini na koje ste prijavljeni. Kliknite "Odjavi se" za odjavu.
+          </p>
+        </div>
+        <button id="load-prijave-btn" type="button" class="secondary-button">
+          Osvježi
+        </button>
+      </div>
+      <div id="prijave-lista"><p class="muted">Prijavite se kako biste vidjeli svoje prijave.</p></div>
     </section>
 
     <section id="admin" class="card">
