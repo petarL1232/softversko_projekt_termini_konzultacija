@@ -41,6 +41,7 @@ def get_session() -> Generator[Session, None, None]:
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
+
 def create_default_admin() -> None:
     from app.models import User, UserRole
     from app.services.security import hash_password
