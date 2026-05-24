@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Termini konzultacija</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div>
+        <strong>Termini konzultacija</strong>
+        <span class="muted">/ prijava na laboratorij</span>
+      </div>
+      <nav>
+        <a href="#auth">Auth</a>
+        <a href="#termini">Termini</a>
+        <a href="#moje-prijave">Moje prijave</a>
+        <a href="#admin">Admin</a>
+        <a href="/docs">Swagger</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- ── HERO ── -->
+      <section class="hero card">
+        <h1>Početni kostur projekta</h1>
+        <p>
+          Ovo je minimalni UI koji FastAPI servira iz <code>app/static</code> foldera.
+          Svaka osoba može dodati svoj dio bez uvođenja Reacta/Angulara.
+        </p>
+        <button id="health-button" type="button">Testiraj API /health</button>
+        <pre id="health-result">Klikni gumb za provjeru.</pre>
+      </section>
+
+      <!-- ── AUTH ── -->
+      <section id="auth" class="grid">
+        <article class="card">
+          <h2>Login</h2>
+          <input id="login-email" type="email" placeholder="email" />
+          <input id="login-password" type="password" placeholder="lozinka" />
+          <button id="login-button" type="button">Prijavi se</button>
+          <pre id="login-result" class="hidden"></pre>
+        </article>
+
+        <article class="card">
+          <h2>Register</h2>
+          <input id="reg-first" type="text" placeholder="ime" />
+          <input id="reg-last" type="text" placeholder="prezime" />
+          <input id="reg-email" type="email" placeholder="email" />
+          <input id="reg-password" type="password" placeholder="lozinka" />
+          <button id="register-button" type="button">Registriraj se</button>
+          <pre id="register-result" class="hidden"></pre>
+        </article>
+      </section>
+
+      <!-- ── TERMINI ── -->
+      <section id="termini" class="card">
+        <h2>Termini konzultacija</h2>
+        <p class="muted" id="termini-hint">Prijavite se kako biste vidjeli termine.</p>
+        <button id="load-termini-btn" type="button" style="display:none">
+          Učitaj termine
+        </button>
+        <div id="termini-lista"></div>
+      </section>
+
+      <!-- ── MOJE PRIJAVE (Osoba 4) ── -->
+      <section id="moje-prijave" class="card">
+        <h2>Moje prijave</h2>
+        <p class="muted" id="prijave-hint">Prijavite se kako biste vidjeli svoje prijave.</p>
+        <button id="load-prijave-btn" type="button" style="display:none">
+          Osvježi moje prijave
+        </button>
+        <div id="prijave-lista"></div>
+      </section>
+
+      <!-- ── ADMIN ── -->
+      <section id="admin" class="card">
+        <h2>Admin panel</h2>
+        <p class="muted">
+          Ovdje ide forma za kreiranje, uređivanje i brisanje termina (osoba 3).
+        </p>
+      </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>
