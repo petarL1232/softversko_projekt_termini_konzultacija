@@ -1,67 +1,142 @@
 <!doctype html>
 <html lang="hr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Termini konzultacija</title>
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
-  <body>
-    <header class="navbar">
-      <div>
-        <strong>Termini konzultacija</strong>
-        <span class="muted">/ prijava na laboratorij</span>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>Termini konzultacija</title>
+  <link rel="stylesheet" href="/static/style.css?v=auth-ui-v2" />
+  <script defer src="/static/script.js?v=auth-ui-v2"></script>
+</head>
+
+<body>
+  <header class="navbar">
+    <div>
+      <strong>Termini konzultacija</strong>
+      <span class="muted">/ prijava na laboratorij</span>
+    </div>
+
+    <nav aria-label="Glavna navigacija">
+      <span id="navbar-current-user" class="user-pill">Niste prijavljeni</span>
+      <a href="#auth">Auth</a>
+      <a href="#terms">Termini</a>
+      <a href="#admin">Admin</a>
+      <a href="/docs" target="_blank" rel="noreferrer">Swagger</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero card">
+      <p class="eyebrow">FastAPI + PostgreSQL</p>
+      <h1>Minimalni UI za autentikaciju</h1>
+      <p class="muted">
+        Ovaj dio pokriva register, login, spremanje JWT tokena,
+        dohvat trenutnog korisnika i logout. Ostali članovi tima mogu
+        kasnije nadograditi termine, prijave i admin funkcionalnosti.
+      </p>
+
+      <div class="actions-row">
+        <button id="health-button" type="button">Testiraj /health</button>
+        <button id="refresh-user-button" type="button">
+          Osvježi trenutnog korisnika
+        </button>
       </div>
-      <nav>
-        <a href="#auth">Auth</a>
-        <a href="#termini">Termini</a>
-        <a href="#admin">Admin</a>
-        <a href="/docs">Swagger</a>
-      </nav>
-    </header>
 
-    <main class="container">
-      <section class="hero card">
-        <h1>Početni kostur projekta</h1>
-        <p>
-          Ovo je minimalni UI koji FastAPI servira iz <code>app/static</code> foldera.
-          Svaka osoba može kasnije dodati svoj dio bez uvođenja Reacta/Angulara.
-        </p>
-        <button id="health-button" type="button">Testiraj API /health</button>
-        <pre id="health-result">Klikni gumb za provjeru.</pre>
-      </section>
+      <pre id="health-result">Klikni gumb za provjeru API-ja.</pre>
+      <p id="script-status" class="script-status">Frontend script se učitava...</p>
+    </section>
 
-      <section id="auth" class="grid">
-        <article class="card">
-          <h2>Login</h2>
-          <input type="email" placeholder="email" />
-          <input type="password" placeholder="password" />
-          <button type="button">TODO: Login</button>
-        </article>
-
-        <article class="card">
-          <h2>Register</h2>
-          <input type="email" placeholder="email" />
-          <input type="password" placeholder="password" />
-          <button type="button">TODO: Register</button>
-        </article>
-      </section>
-
-      <section id="termini" class="card">
-        <h2>Termini</h2>
+    <section id="auth" class="grid two-columns">
+      <article class="card">
+        <h2>Register</h2>
         <p class="muted">
-          Ovdje kasnije ide lista termina, popunjenost i gumbi za prijavu/odjavu.
+          Register stvara običnog studenta. Admin/profesor korisnici se
+          dodaju kroz seed podatke ili admin funkcionalnost.
         </p>
-      </section>
 
-      <section id="admin" class="card">
-        <h2>Admin panel</h2>
+        <form id="register-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
+          <label for="register-first-name">Ime</label>
+          <input id="register-first-name" name="first_name" type="text" autocomplete="given-name" placeholder="stavi neko ime pls" />
+
+          <label for="register-last-name">Prezime</label>
+          <input id="register-last-name" name="last_name" type="text" autocomplete="family-name" placeholder="stavi neko prezime pls" />
+
+          <label for="register-email">Email</label>
+          <input id="register-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required />
+
+          <label for="register-password">Lozinka</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="min 6 znakova" minlength="6" required />
+
+          <button id="register-submit" type="button">Registriraj se</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h2>Login</h2>
         <p class="muted">
-          Ovdje kasnije ide forma za kreiranje, uređivanje i brisanje termina.
+          Login koristi OAuth2 password formu. U polje username šaljemo email,
+          isto kao u Swagger Authorize prozoru.
         </p>
-      </section>
-    </main>
 
-    <script src="/static/script.js"></script>
-  </body>
+        <form id="login-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required />
+
+          <label for="login-password">Lozinka</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="test123" required />
+
+          <button id="login-submit" type="button">Login</button>
+        </form>
+      </article>
+    </section>
+
+    <section class="card" id="current-user-panel">
+      <div class="section-header">
+        <div>
+          <h2>Trenutni korisnik</h2>
+          <p class="muted">
+            Ako je token spremljen u localStorage, ovdje se prikazuje
+            rezultat endpointa <code>GET /auth/me</code>.
+          </p>
+        </div>
+        <button id="logout-button" type="button" class="secondary-button">
+          Logout
+        </button>
+      </div>
+
+      <div id="current-user" class="status-box">
+        Niste prijavljeni.
+      </div>
+      <div id="auth-message" class="message-box" role="status"></div>
+    </section>
+
+    <section id="terms" class="card">
+      <div class="section-header">
+        <div>
+          <h2>Termini</h2>
+          <p class="muted">
+            Ovaj prikaz je samo priprema za dio osobe koja radi termine.
+            Ako endpoint <code>GET /termini</code> postoji, prikazat će se
+            osnovni JSON odgovor.
+          </p>
+        </div>
+        <button id="load-terms-button" type="button" class="secondary-button">
+          Učitaj termine
+        </button>
+      </div>
+      <pre id="terms-result">Termini još nisu učitani.</pre>
+    </section>
+
+    <section id="admin" class="card">
+      <h2>Admin panel</h2>
+      <p class="muted">
+        Admin UI za kreiranje i uređivanje termina ide kasnije u dio osobe
+        zadužene za CRUD termina. Auth dio ovdje samo omogućuje da se zna
+        tko je prijavljen i koja mu je rola.
+      </p>
+    </section>
+  </main>
+</body>
+
 </html>
