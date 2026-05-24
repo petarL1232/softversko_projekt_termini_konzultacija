@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import create_db_and_tables
+from app.database import create_db_and_tables, create_default_admin
 from app.models import HealthResponse
 from app.routers import auth, prijave, termini
 
@@ -18,6 +18,7 @@ STATIC_DIR = BASE_DIR / "static"
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     create_db_and_tables()
+    create_default_admin()
     yield
 
 
