@@ -8,7 +8,7 @@ Endpointi:
   GET    /termini/{termin_id}/popunjenost     – popunjenost termina (javno)
 """
 
-from pathlib
+import pathlib
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse, Response
