@@ -263,6 +263,10 @@ async function loginUser(event) {
 
     setMessage("Login uspjesan. Token je spremljen u localStorage.", "ok");
     await loadCurrentUser({ keepTokenFallback: true });
+
+    // Osoba 4: učitaj termine i prijave nakon logina
+    await ucitajTermine();
+    await ucitajMojePrijave();
   } catch (error) {
     setMessage(`Login nije uspio: ${error.message}`, "error");
   } finally {
@@ -334,18 +338,7 @@ function logoutUser() {
 }
 
 async function loadTermsPreview() {
-  if (!termsResult) {
-    return;
-  }
-
-  termsResult.textContent = "Ucitavanje termina...";
-
-  try {
-    const terms = await apiFetch("/termini");
-    termsResult.textContent = JSON.stringify(terms, null, 2);
-  } catch (error) {
-    termsResult.textContent = `Termini nisu dostupni: ${error.message}`;
-  }
+  await ucitajTermine();
 }
 
 function setupAuthUi() {
@@ -363,7 +356,12 @@ function setupAuthUi() {
   logoutButton?.addEventListener("click", logoutUser);
   loadTermsButton?.addEventListener("click", loadTermsPreview);
 
-  loadCurrentUser();
+  loadCurrentUser().then((user) => {
+    if (user) {
+      ucitajTermine();
+      ucitajMojePrijave();
+    }
+  });
 }
 
 setupAuthUi();
@@ -376,3 +374,160 @@ window.appApi = {
   loadCurrentUser,
   setToken,
 };
+
+// ============================================================
+// Osoba 4 – Termini s prijavom/odjavom
+// ============================================================
+
+function formatDateTime(iso) {
+  if (!iso) return "?";
+  return new Date(iso).toLocaleString("hr-HR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+async function ucitajTermine() {
+  const lista = document.querySelector("#termini-lista");
+  const preEl = document.querySelector("#terms-result");
+  if (!lista) return;
+
+  lista.innerHTML = "<p class='muted'>Učitavanje termina…</p>";
+  if (preEl) preEl.style.display = "none";
+
+  try {
+    const termini = await apiFetch("/termini");
+
+    if (!termini.length) {
+      lista.innerHTML = "<p class='muted'>Nema dostupnih termina.</p>";
+      return;
+    }
+
+    // Dohvati prijave trenutnog studenta
+    let mojaPrijavaIds = new Set();
+    try {
+      const moje = await apiFetch("/me/prijave");
+      mojaPrijavaIds = new Set(moje.map((p) => p.termin?.term_id));
+    } catch (_) {}
+
+    lista.innerHTML = "";
+
+    for (const termin of termini) {
+      const prijavljen = mojaPrijavaIds.has(termin.term_id);
+
+      let popTekst = "";
+      let popunjen = false;
+      try {
+        const pop = await apiFetch(`/termini/${termin.term_id}/popunjenost`);
+        popTekst = `Slobodna mjesta: ${pop.free_places} / ${pop.capacity}`;
+        popunjen = pop.full;
+        if (popunjen) popTekst += " 🔴 POPUNJENO";
+      } catch (_) {
+        popTekst = "Kapacitet nije dostupan";
+      }
+
+      const card = document.createElement("article");
+      card.className = "card";
+      card.style.cssText = "margin-bottom:0.75rem;padding:1rem;";
+      card.innerHTML = `
+        <strong>Termin #${termin.term_id}</strong><br/>
+        Profesor ID: ${termin.professor_id} &nbsp;|&nbsp; Predmet ID: ${termin.subject_id}<br/>
+        🕐 ${formatDateTime(termin.start_time)} – ${formatDateTime(termin.end_time)}<br/>
+        <span class="muted" id="pop-${termin.term_id}">${popTekst}</span><br/>
+        <button
+          class="prijava-btn"
+          data-id="${termin.term_id}"
+          data-prijavljen="${prijavljen}"
+          style="margin-top:0.5rem;width:auto;padding:0.5rem 1rem;"
+          ${!prijavljen && popunjen ? "disabled" : ""}
+        >${prijavljen ? "❌ Odjavi se" : "✔ Prijavi se"}</button>
+        <span class="prijava-status" style="margin-left:0.5rem;font-size:0.875rem;"></span>
+      `;
+      lista.appendChild(card);
+    }
+
+    lista.querySelectorAll(".prijava-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const termId = Number(btn.dataset.id);
+        const prijavljen = btn.dataset.prijavljen === "true";
+        const statusEl = btn.nextElementSibling;
+
+        btn.disabled = true;
+        statusEl.textContent = "…";
+
+        try {
+          if (prijavljen) {
+            await apiFetch(`/termini/${termId}/prijava`, { method: "DELETE" });
+            statusEl.textContent = "✔ Odjavljeni ste.";
+            btn.textContent = "✔ Prijavi se";
+            btn.dataset.prijavljen = "false";
+          } else {
+            await apiFetch(`/termini/${termId}/prijava`, { method: "POST" });
+            statusEl.textContent = "✔ Prijavljeni ste!";
+            btn.textContent = "❌ Odjavi se";
+            btn.dataset.prijavljen = "true";
+          }
+          btn.disabled = false;
+          await ucitajMojePrijave();
+        } catch (err) {
+          statusEl.textContent = `✖ ${err.message}`;
+          btn.disabled = false;
+        }
+      });
+    });
+  } catch (err) {
+    lista.innerHTML = `<p style="color:#dc2626">Greška: ${err.message}</p>`;
+  }
+}
+
+// ============================================================
+// Osoba 4 – Moje prijave
+// ============================================================
+
+async function ucitajMojePrijave() {
+  const lista = document.querySelector("#prijave-lista");
+  if (!lista) return;
+
+  lista.innerHTML = "<p class='muted'>Učitavanje…</p>";
+
+  try {
+    const prijave = await apiFetch("/me/prijave");
+
+    if (!prijave.length) {
+      lista.innerHTML = "<p class='muted'>Niste prijavljeni ni na jedan termin.</p>";
+      return;
+    }
+
+    lista.innerHTML = "";
+    prijave.forEach((p) => {
+      const t = p.termin;
+      const row = document.createElement("div");
+      row.style.cssText = "border-bottom:1px solid #dfe5ef;padding:0.6rem 0;";
+      row.innerHTML = t
+        ? `<strong>Termin #${t.term_id}</strong> —
+           ${formatDateTime(t.start_time)} do ${formatDateTime(t.end_time)}<br/>
+           <span class="muted">Profesor ID: ${t.professor_id} | Predmet ID: ${t.subject_id}</span><br/>
+           <span class="muted">Prijavljeno: ${formatDateTime(p.registered_at)}</span>`
+        : `<span class="muted">Termin je obrisan (registration_id: ${p.registration_id})</span>`;
+      lista.appendChild(row);
+    });
+  } catch (err) {
+    lista.innerHTML = `<p style="color:#dc2626">Greška: ${err.message}</p>`;
+  }
+}
+
+// ============================================================
+// Osoba 4 – hookanje na postojeće event listenere
+// ============================================================
+
+document.querySelector("#load-terms-button")?.addEventListener("click", ucitajTermine);
+document.querySelector("#load-prijave-btn")?.addEventListener("click", ucitajMojePrijave);
+
+// Proširi window.appApi s Osoba 4 funkcijama
+if (window.appApi) {
+  window.appApi.ucitajTermine = ucitajTermine;
+  window.appApi.ucitajMojePrijave = ucitajMojePrijave;
+}
