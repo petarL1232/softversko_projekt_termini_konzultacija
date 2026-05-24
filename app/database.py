@@ -1,20 +1,15 @@
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 from dotenv import load_dotenv
+from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
 load_dotenv()
 
 
 def build_database_url() -> str:
-    """Build the PostgreSQL connection URL.
-
-    Priority:
-    1. DATABASE_URL, useful for Docker and CI.
-    2. DB_USER/DB_PASSWORD/DB_HOST/DB_PORT/DB_NAME, useful for local .env files.
-    3. Safe Docker-compose default for this project.
-    """
 
     database_url = os.getenv("DATABASE_URL")
     if database_url:
@@ -38,5 +33,18 @@ def get_session() -> Generator[Session, None, None]:
         yield session
 
 
+def run_trigger_sql() -> None:
+    trigger_path = Path(__file__).resolve().parent.parent / "sql" / "trigger.sql"
+
+    if not trigger_path.exists():
+        return
+
+    sql_script = trigger_path.read_text(encoding="utf-8")
+
+    with engine.begin() as connection:
+        connection.execute(text(sql_script))
+
+
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+    run_trigger_sql()
