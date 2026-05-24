@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════════
+   termini_admin.css — Osoba 3: stilovi za termine
+   Dodaj na kraj postojećeg style.css
+   ═══════════════════════════════════════════════ */
+
+/* Tablica termina */
+.termini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+.termini-table th {
+  background: #f1f3f5;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.termini-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.termini-table tbody tr:hover {
+  background: #f8f9ff;
+}
+
+/* Popunjenost bar */
+.occ-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.occ-bar {
+  width: 64px;
+  height: 5px;
+  background: #dee2e6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.occ-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.occ-green  { background: #198754; }
+.occ-yellow { background: #ffc107; }
+.occ-red    { background: #dc3545; }
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-slobodno { background: #d1e7dd; color: #0f5132; }
+.status-skoro    { background: #fff3cd; color: #664d03; }
+.status-puno     { background: #f8d7da; color: #842029; }
+.status-unknown  { background: #e9ecef; color: #495057; }
