@@ -126,11 +126,12 @@ def normalize_password_for_blocklist(password: str) -> set[str]:
         leet_alnum_only,
     }
 
+
 def validate_password_not_common(password: str) -> None:
     """Odbija ceste ili lako pogodne lozinke za nove registracije.
 
     Provjera se koristi samo kod registracije.
-    Postojeci korisnici i demo/admin login nisu pogodeni 
+    Postojeci korisnici i demo/admin login nisu pogodeni
     jer login ne poziva ovu funkciju.
     """
 
