@@ -96,6 +96,11 @@ class UserRead(SQLModel):
     office_id: int | None = None
 
 
+class UserRoleUpdateRequest(SQLModel):
+    role: UserRole
+    office_id: int | None = None
+
+
 # Request/response schemas for future consultation term endpoints.
 
 

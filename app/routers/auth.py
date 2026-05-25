@@ -5,7 +5,15 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import RegisterRequest, TokenResponse, User, UserRead, UserRole
+from app.models import (
+    Office,
+    RegisterRequest,
+    TokenResponse,
+    User,
+    UserRead,
+    UserRole,
+    UserRoleUpdateRequest,
+)
 from app.services.security import (
     create_access_token,
     decode_access_token,
@@ -303,6 +311,63 @@ def require_admin(
         )
 
     return current_user
+
+
+@router.get("/users", response_model=list[UserRead])
+def list_users(
+    session: Session = Depends(get_session),
+    admin: User = Depends(require_admin),
+) -> list[User]:
+    users = session.exec(select(User).order_by(User.user_id)).all()
+    return list(users)
+
+
+@router.patch("/users/{user_id}/role", response_model=UserRead)
+def update_user_role(
+    user_id: int,
+    payload: UserRoleUpdateRequest,
+    session: Session = Depends(get_session),
+    admin: User = Depends(require_admin),
+) -> User:
+    user = session.get(User, user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Korisnik nije pronađen.",
+        )
+
+    if user.user_id == admin.user_id and payload.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin ne može sam sebi ukloniti admin rolu.",
+        )
+
+    if payload.role == UserRole.PROFESSOR:
+        if payload.office_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Profesor mora imati postavljen ured/prostoriju.",
+            )
+
+        office = session.get(Office, payload.office_id)
+        if office is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ured/prostorija nije pronađena.",
+            )
+
+        user.office_id = payload.office_id
+    else:
+        user.office_id = None
+
+    user.role = payload.role
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
 
 
 @router.post(
