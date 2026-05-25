@@ -16,6 +16,11 @@ from app.models import (
 )
 from app.seed import PROFESSORS, SUBJECTS, seed_mathos_full_data
 
+postgres_only = pytest.mark.skipif(
+    engine.dialect.name != "postgresql",
+    reason="PostgreSQL trigger/view tests require PostgreSQL.",
+)
+
 
 @pytest.fixture(name="db_session")
 def db_session_fixture() -> Session:
@@ -153,6 +158,7 @@ def test_professor_can_create_consultation_term(db_session: Session) -> None:
     assert term.term_id is not None
 
 
+@postgres_only
 def test_student_cannot_create_consultation_term(db_session: Session) -> None:
     student = create_student(db_session)
     subject = create_subject(db_session)
@@ -172,6 +178,7 @@ def test_student_cannot_create_consultation_term(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_professor_must_have_office(db_session: Session) -> None:
     professor = User(
         first_name="No",
@@ -189,6 +196,7 @@ def test_professor_must_have_office(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_student_cannot_have_office(db_session: Session) -> None:
     office = create_office(db_session)
     student = User(
@@ -207,6 +215,7 @@ def test_student_cannot_have_office(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_invalid_time_range_is_rejected(db_session: Session) -> None:
     professor = create_professor(db_session)
     subject = create_subject(db_session)
@@ -226,6 +235,7 @@ def test_invalid_time_range_is_rejected(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_only_students_can_register_for_term(db_session: Session) -> None:
     professor = create_professor(db_session)
     subject = create_subject(db_session)
@@ -240,6 +250,7 @@ def test_only_students_can_register_for_term(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_duplicate_registration_is_rejected(db_session: Session) -> None:
     professor = create_professor(db_session)
     student = create_student(db_session)
@@ -257,6 +268,7 @@ def test_duplicate_registration_is_rejected(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_office_capacity_is_enforced(db_session: Session) -> None:
     office = create_office(db_session, capacity=1)
     professor = create_professor(db_session, office=office)
@@ -280,6 +292,7 @@ def test_office_capacity_is_enforced(db_session: Session) -> None:
     db_session.rollback()
 
 
+@postgres_only
 def test_consultation_overview_view_contains_free_places(db_session: Session) -> None:
     office = create_office(db_session, capacity=3)
     professor = create_professor(db_session, office=office)

@@ -9,4 +9,5 @@ TEST_DB_PATH = Path(__file__).resolve().parent / ".pytest_test.db"
 if TEST_DB_PATH.exists():
     TEST_DB_PATH.unlink()
 
-os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"

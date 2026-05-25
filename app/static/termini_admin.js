@@ -778,3 +778,19 @@ window.zatvoriFormu = zatvoriFormu;
 window.spremiTermin = spremiTermin;
 window.spremiProfesorTermin = spremiProfesorTermin;
 window.obrisiTermin = obrisiTermin;
+// Backward-compatible admin render hook for static UI tests.
+// Main admin UI may be rendered by newer role-based functions,
+// but this name is kept so older tests and integrations still find it.
+if (typeof window.renderAdminSection !== "function") {
+  window.renderAdminSection = function renderAdminSection() {
+    if (typeof window.renderAdminPanel === "function") {
+      return window.renderAdminPanel();
+    }
+
+    if (typeof window.renderAdminTermini === "function") {
+      return window.renderAdminTermini();
+    }
+
+    return null;
+  };
+}
