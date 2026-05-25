@@ -10,6 +10,7 @@ from app.config import settings
 from app.database import create_db_and_tables, create_default_admin
 from app.models import HealthResponse
 from app.routers import auth, prijave, termini
+from app.seed import seed_mathos_full_data
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -19,6 +20,7 @@ STATIC_DIR = BASE_DIR / "static"
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     create_db_and_tables()
     create_default_admin()
+    seed_mathos_full_data()
     yield
 
 
