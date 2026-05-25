@@ -24,7 +24,10 @@ def register_user(
     first_name: str = "Test",
     last_name: str = "Student",
 ):
-    """Helper za register u testovima."""
+    """Helper za register u testovima.
+
+    Namjerno ostaje jednostavan jer auth endpoint testiramo kroz pravi API.
+    """
 
     return client.post(
         "/auth/register",
@@ -42,7 +45,11 @@ def login_user(
     email: str,
     password: str = VALID_PASSWORD,
 ):
-    """Helper za OAuth2 login formu."""
+    """Helper za OAuth2 login formu.
+
+    Backend login ne prima JSON nego form-data:
+    username=email, password=lozinka.
+    """
 
     return client.post(
         "/auth/login",
@@ -56,10 +63,13 @@ def login_user(
 def test_register_creates_user_without_password_hash() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         response = register_user(client, email)
 
     assert response.status_code == 201
+
     data = response.json()
+
     assert data["email"] == email
     assert data["role"] == "student"
     assert data["first_name"] == "Test"
@@ -71,6 +81,7 @@ def test_register_creates_user_without_password_hash() -> None:
 def test_register_duplicate_email_returns_409() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         first_response = register_user(client, email)
         second_response = register_user(client, email)
 
@@ -82,6 +93,7 @@ def test_register_normalizes_email_and_rejects_duplicate_with_spaces() -> None:
     with TestClient(app) as client:
         email = unique_email()
         messy_email = f" {email.upper()} "
+
         first_response = register_user(client, messy_email)
         second_response = register_user(client, email)
 
@@ -133,16 +145,46 @@ def test_register_rejects_weak_passwords(
     expected_message: str,
 ) -> None:
     with TestClient(app) as client:
-        response = register_user(client, unique_email(), password=password)
+        response = register_user(
+            client,
+            unique_email(),
+            password=password,
+        )
 
     assert response.status_code == 400
     assert "Lozinka nije dovoljno jaka" in response.json()["detail"]
     assert expected_message in response.json()["detail"]
 
 
+@pytest.mark.parametrize(
+    "password",
+    [
+        "Password123!",
+        "Qwerty123456!",
+        "Admin123456!",
+        "Welcome12345!",
+        "P@ssw0rd123!",
+    ],
+)
+def test_register_rejects_common_passwords(password: str) -> None:
+    with TestClient(app) as client:
+        response = register_user(
+            client,
+            unique_email(),
+            password=password,
+        )
+
+    assert response.status_code == 400
+    assert "cestih lozinki" in response.json()["detail"]
+
+
 def test_register_accepts_strong_password() -> None:
     with TestClient(app) as client:
-        response = register_user(client, unique_email(), password=VALID_PASSWORD)
+        response = register_user(
+            client,
+            unique_email(),
+            password="StrongPass123!",
+        )
 
     assert response.status_code == 201
     assert response.json()["role"] == "student"
@@ -151,11 +193,14 @@ def test_register_accepts_strong_password() -> None:
 def test_login_with_valid_credentials_returns_token() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(client, email)
         response = login_user(client, email)
 
     assert response.status_code == 200
+
     data = response.json()
+
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     assert len(data["access_token"]) > 20
@@ -164,6 +209,7 @@ def test_login_with_valid_credentials_returns_token() -> None:
 def test_login_with_uppercase_email_still_works() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(client, email)
         response = login_user(client, email.upper())
 
@@ -174,8 +220,9 @@ def test_login_with_uppercase_email_still_works() -> None:
 def test_login_with_wrong_password_returns_401() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(client, email)
-        response = login_user(client, email, password="WrongPass123!")
+        response = login_user(client, email, password="wrong-password")
 
     assert response.status_code == 401
 
@@ -190,6 +237,7 @@ def test_login_with_unknown_email_returns_401() -> None:
 def test_login_with_json_body_returns_422() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(client, email)
         response = client.post(
             "/auth/login",
@@ -205,6 +253,7 @@ def test_login_with_json_body_returns_422() -> None:
 def test_auth_me_with_valid_token_returns_current_user() -> None:
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(
             client,
             email,
@@ -212,14 +261,18 @@ def test_auth_me_with_valid_token_returns_current_user() -> None:
             last_name="Tester",
         )
         login_response = login_user(client, email)
+
         token = login_response.json()["access_token"]
+
         me_response = client.get(
             "/auth/me",
             headers={"Authorization": f"Bearer {token}"},
         )
 
     assert me_response.status_code == 200
+
     data = me_response.json()
+
     assert data["email"] == email
     assert data["role"] == "student"
     assert data["first_name"] == "Petar"
@@ -264,9 +317,11 @@ def test_valid_token_still_works_after_frontend_logout_concept() -> None:
 
     with TestClient(app) as client:
         email = unique_email()
+
         register_user(client, email)
         login_response = login_user(client, email)
         token = login_response.json()["access_token"]
+
         first_me_response = client.get(
             "/auth/me",
             headers={"Authorization": f"Bearer {token}"},

@@ -13,9 +13,6 @@ from app.services.security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-PASSWORD_MIN_LENGTH = 12
-PASSWORD_SPECIAL_CHARS = set("!@#$%^&*()-_=+[]{};:,.?/\\|`~<>\"'")
-
 
 def normalize_email(email: str) -> str:
     """Najosnovnija normalizacija email adrese.
@@ -28,12 +25,132 @@ def normalize_email(email: str) -> str:
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+PASSWORD_MIN_LENGTH = 12
+PASSWORD_SPECIAL_CHARS = set("!@#$%^&*()-_=+[]{};:,.?/\\|`~<>\"'")
+
+COMMON_PASSWORD_BLOCKLIST = {
+    "123456",
+    "1234567",
+    "12345678",
+    "123456789",
+    "1234567890",
+    "111111",
+    "000000",
+    "password",
+    "password1",
+    "password12",
+    "password123",
+    "password1234",
+    "password12345",
+    "password123456",
+    "qwerty",
+    "qwerty1",
+    "qwerty12",
+    "qwerty123",
+    "qwerty1234",
+    "qwerty12345",
+    "qwerty123456",
+    "admin",
+    "admin1",
+    "admin12",
+    "admin123",
+    "admin1234",
+    "admin12345",
+    "admin123456",
+    "welcome",
+    "welcome1",
+    "welcome12",
+    "welcome123",
+    "welcome1234",
+    "welcome12345",
+    "letmein",
+    "letmein123",
+    "changeme",
+    "changeme123",
+    "default",
+    "default123",
+    "test",
+    "test123",
+    "test1234",
+    "test12345",
+    "student",
+    "student1",
+    "student12",
+    "student123",
+    "student1234",
+    "student12345",
+    "profesor",
+    "profesor123",
+    "professor",
+    "professor123",
+    "mathos",
+    "mathos123",
+    "osijek",
+    "osijek123",
+    "lozinka",
+    "lozinka1",
+    "lozinka12",
+    "lozinka123",
+    "lozinka1234",
+    "lozinka12345",
+}
+
+LEET_TRANSLATION = str.maketrans(
+    {
+        "@": "a",
+        "$": "s",
+        "0": "o",
+    }
+)
+
+
+def normalize_password_for_blocklist(password: str) -> set[str]:
+    """Vraca varijante lozinke za usporedbu s blocklistom.
+
+    Primjeri:
+    - " Password123! " daje varijante koje hvataju password123
+    - "P@ssw0rd123!" daje varijantu password123
+    """
+
+    lowered = password.strip().lower()
+
+    leet_lowered = lowered.translate(LEET_TRANSLATION)
+
+    alnum_only = "".join(char for char in lowered if char.isalnum())
+    leet_alnum_only = "".join(char for char in leet_lowered if char.isalnum())
+
+    return {
+        lowered,
+        leet_lowered,
+        alnum_only,
+        leet_alnum_only,
+    }
+
+def validate_password_not_common(password: str) -> None:
+    """Odbija ceste ili lako pogodne lozinke za nove registracije.
+
+    Provjera se koristi samo kod registracije.
+    Postojeci korisnici i demo/admin login nisu pogodeni jer login ne poziva ovu funkciju.
+    """
+
+    password_variants = normalize_password_for_blocklist(password)
+
+    if password_variants.intersection(COMMON_PASSWORD_BLOCKLIST):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Lozinka je na listi cestih lozinki ili je previse lako pogodiva. "
+                "Odaberite jedinstvenu lozinku."
+            ),
+        )
+
 
 def validate_password_strength(password: str) -> None:
-    """Provjeri password policy za nove registracije.
+    """Provjerava password policy za nove registracije.
 
-    Namjerno se poziva samo u register endpointu.
-    Stari/demo korisnici nisu pogođeni jer login samo provjerava hash.
+    Ovo se koristi samo kod registracije novih korisnika.
+    Login ne koristi ovu provjeru, tako da postojeci demo korisnici
+    i stari hashirani passwordi i dalje rade.
     """
 
     missing_rules: list[str] = []
@@ -133,11 +250,22 @@ def register_user(
 ) -> User:
     """Registrira novog korisnika.
 
-    Password policy vrijedi samo za nove registracije.
-    Postojeci korisnici i seed/demo korisnici nisu pogođeni.
+    Koraci:
+    1. Ocisti email.
+    2. Provjeri je li lozinka na listi cestih lozinki.
+    3. Provjeri password policy za novu lozinku.
+    4. Provjeri postoji li vec korisnik s tim emailom.
+    5. Hashira lozinku.
+    6. Spremi korisnika u bazu.
+    7. Vrati korisnika bez password_hash polja.
+
+    Obican register uvijek stvara role="student".
+    Admin i professor korisnike dodajemo kroz seed/demo podatke ili admin rute.
     """
 
     email = normalize_email(payload.email)
+
+    validate_password_not_common(payload.password)
     validate_password_strength(payload.password)
 
     existing_user = session.exec(select(User).where(User.email == email)).first()
