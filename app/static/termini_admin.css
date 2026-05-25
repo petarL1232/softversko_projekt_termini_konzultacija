@@ -1,125 +1,74 @@
-/* Dodatni stilovi za termini_admin.js.
-   Ne dira postojeći auth CSS; samo uređuje termine, admin tablicu i prijave. */
+/* ═══════════════════════════════════════════════
+   termini_admin.css — Osoba 3: stilovi za termine
+   Dodaj na kraj postojećeg style.css
+   ═══════════════════════════════════════════════ */
 
-.terms-actions,
-.table-actions,
-.termin-card-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.termini-lista {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.termin-card {
-  background: #ffffff;
-  border: 1px solid #dfe5ef;
-  border-radius: 1rem;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr auto;
-  padding: 1rem;
-}
-
-.termin-card.is-registered {
-  border-color: #86efac;
-  box-shadow: 0 0 0 3px rgb(134 239 172 / 25%);
-}
-
-.termin-card h3,
-.termin-card p {
-  margin: 0 0 0.35rem;
-}
-
-.registered-badge {
-  background: #ecfdf5;
-  border-radius: 999px;
-  color: #166534;
-  display: inline-block;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-}
-
-.my-registrations-box {
-  background: #f8fafc;
-  border: 1px solid #dfe5ef;
-  border-radius: 0.75rem;
-  margin-top: 1rem;
-  padding: 1rem;
-}
-
-.registrations-list {
-  display: grid;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.registrations-list li {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.link-button {
-  background: transparent;
-  color: #1e5eff;
-  padding: 0;
-  text-decoration: underline;
-  width: auto;
-}
-
-.danger-button {
-  background: #dc2626;
-  color: #ffffff;
-  width: auto;
-}
-
-.termin-forma {
-  background: #f8fafc;
-  border: 1px solid #dfe5ef;
-  border-radius: 1rem;
-  margin: 1rem 0;
-  padding: 1rem;
-}
-
-.admin-table-wrapper {
-  margin-top: 1rem;
-  overflow-x: auto;
-}
-
+/* Tablica termina */
 .termini-table {
-  border-collapse: collapse;
-  min-width: 760px;
   width: 100%;
-}
-
-.termini-table th,
-.termini-table td {
-  border-bottom: 1px solid #e2e8f0;
-  padding: 0.75rem;
-  text-align: left;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 12px;
 }
 
 .termini-table th {
-  background: #f8fafc;
-  color: #334155;
+  background: #f1f3f5;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  border-bottom: 2px solid #dee2e6;
 }
 
-.message-error {
-  color: #991b1b;
-  font-weight: 700;
+.termini-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
 }
 
-@media (max-width: 720px) {
-  .termin-card {
-    grid-template-columns: 1fr;
-  }
+.termini-table tbody tr:hover {
+  background: #f8f9ff;
 }
+
+/* Popunjenost bar */
+.occ-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.occ-bar {
+  width: 64px;
+  height: 5px;
+  background: #dee2e6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.occ-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.occ-green  { background: #198754; }
+.occ-yellow { background: #ffc107; }
+.occ-red    { background: #dc3545; }
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-slobodno { background: #d1e7dd; color: #0f5132; }
+.status-skoro    { background: #fff3cd; color: #664d03; }
+.status-puno     { background: #f8d7da; color: #842029; }
+.status-unknown  { background: #e9ecef; color: #495057; }
