@@ -9,10 +9,10 @@ load_dotenv()
 
 
 def build_database_url() -> str:
-    """Build the PostgreSQL connection URL.
+    """Build the database connection URL.
 
     Priority:
-    1. DATABASE_URL, useful for Docker and CI.
+    1. DATABASE_URL, useful for Docker, CI and tests.
     2. DB_USER/DB_PASSWORD/DB_HOST/DB_PORT/DB_NAME, useful for local .env files.
     3. Safe Docker-compose default for this project.
     """
@@ -31,7 +31,12 @@ def build_database_url() -> str:
 
 
 DATABASE_URL = build_database_url()
-engine = create_engine(DATABASE_URL)
+
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 
 def get_session() -> Generator[Session, None, None]:
@@ -42,9 +47,11 @@ def get_session() -> Generator[Session, None, None]:
 def run_trigger_sql() -> None:
     """Run optional PostgreSQL trigger definitions.
 
-    This file adapts the SQL trigger work to the existing Python models.
-    It is safe to call multiple times because sql/trigger.sql is idempotent.
+    Trigger SQL is PostgreSQL-specific, so it is skipped for SQLite test databases.
     """
+
+    if engine.url.get_backend_name() == "sqlite":
+        return
 
     trigger_path = Path(__file__).resolve().parent.parent / "sql" / "trigger.sql"
 
@@ -68,13 +75,18 @@ def create_db_and_tables() -> None:
 
 
 def create_default_admin() -> None:
-    """Create a demo admin compatible with the existing auth flow."""
+    """Create a demo admin compatible with the existing auth flow.
+
+    Password policy is enforced only through /auth/register, so this seeded
+    admin can keep the existing demo password.
+    """
 
     from app.models import User, UserRole
     from app.services.security import hash_password
 
     with Session(engine) as session:
         admin = session.query(User).filter_by(email="admin@example.com").first()
+
         if not admin:
             admin = User(
                 first_name="Admin",

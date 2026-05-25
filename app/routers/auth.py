@@ -13,18 +13,55 @@ from app.services.security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+PASSWORD_MIN_LENGTH = 12
+PASSWORD_SPECIAL_CHARS = set("!@#$%^&*()-_=+[]{};:,.?/\\|`~<>\"'")
+
 
 def normalize_email(email: str) -> str:
-    """najosnovnija normalizacija email adrese.
+    """Najosnovnija normalizacija email adrese.
 
-    Primjer:
-    "  Test@Email.com  " -> "test@email.com"
+    Primjer: " Test@Email.com " -> "test@email.com"
     """
 
     return email.strip().lower()
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def validate_password_strength(password: str) -> None:
+    """Provjeri password policy za nove registracije.
+
+    Namjerno se poziva samo u register endpointu.
+    Stari/demo korisnici nisu pogođeni jer login samo provjerava hash.
+    """
+
+    missing_rules: list[str] = []
+
+    if len(password) < PASSWORD_MIN_LENGTH:
+        missing_rules.append("najmanje 12 znakova")
+
+    if not any(char.isupper() for char in password):
+        missing_rules.append("barem jedno veliko slovo")
+
+    if not any(char.islower() for char in password):
+        missing_rules.append("barem jedno malo slovo")
+
+    if not any(char.isdigit() for char in password):
+        missing_rules.append("barem jedan broj")
+
+    if not any(char in PASSWORD_SPECIAL_CHARS for char in password):
+        missing_rules.append("barem jedan specijalni znak")
+
+    if missing_rules:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Lozinka nije dovoljno jaka. Mora imati: "
+                + ", ".join(missing_rules)
+                + "."
+            ),
+        )
 
 
 def get_role_value(role: UserRole | str) -> str:
@@ -96,18 +133,12 @@ def register_user(
 ) -> User:
     """Registrira novog korisnika.
 
-    Koraci:
-    1. Ocisti email.
-    2. Provjeri postoji li vec korisnik s tim emailom.
-    3. Hashira lozinku.
-    4. Spremi korisnika u bazu.
-    5. Vrati korisnika bez password_hash polja.
-
-    Obican register uvijek stvara role="student".
-    Admin i professor korisnike dodajemo kroz seed/demo podatke ili admin rute.
+    Password policy vrijedi samo za nove registracije.
+    Postojeci korisnici i seed/demo korisnici nisu pogođeni.
     """
 
     email = normalize_email(payload.email)
+    validate_password_strength(payload.password)
 
     existing_user = session.exec(select(User).where(User.email == email)).first()
 
@@ -173,8 +204,9 @@ def login_user(
 
 
 @router.get("/me", response_model=UserRead)
-# Vraca trenutno prijavljenog korisnika.
 def read_me(
     current_user: User = Depends(get_current_user),
 ) -> User:
+    """Vraca trenutno prijavljenog korisnika."""
+
     return current_user
