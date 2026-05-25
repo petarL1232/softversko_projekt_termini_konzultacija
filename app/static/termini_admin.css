@@ -219,3 +219,218 @@
 
 .admin-table-wrapper { border-radius: 10px; overflow: hidden; }
 .message-error { color: #f85149; font-size: 0.88rem; }
+
+/* ── Filteri ─────────────────────────────── */
+.filters-bar {
+  background: var(--surface, #1c2128);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-search input {
+  width: 100%;
+  background: var(--bg2, #161b22);
+  border: 1px solid var(--border2, #3d444d);
+  border-radius: 7px;
+  color: var(--text, #e6edf3);
+  font-size: 0.88rem;
+  padding: 9px 12px;
+}
+
+.filter-search input:focus {
+  outline: none;
+  border-color: var(--accent, #2f81f7);
+  box-shadow: 0 0 0 3px rgba(47,129,247,0.15);
+}
+
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-controls input[type="number"] {
+  width: 140px;
+  background: var(--bg2, #161b22);
+  border: 1px solid var(--border2, #3d444d);
+  border-radius: 7px;
+  color: var(--text, #e6edf3);
+  font-size: 0.85rem;
+  padding: 7px 10px;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text2, #8b949e);
+  cursor: pointer;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ── Tjedni ─────────────────────────────── */
+.week-group { margin-bottom: 24px; }
+
+.week-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent, #2f81f7);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border, #30363d);
+  margin-bottom: 12px;
+}
+
+/* ── Termin kartice ─────────────────────── */
+.termini-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.termin-card {
+  background: var(--surface, #1c2128);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.termin-card:hover {
+  border-color: var(--border2, #3d444d);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.termin-card.is-registered {
+  border-color: rgba(47,129,247,0.5);
+  background: rgba(47,129,247,0.05);
+}
+
+.termin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.termin-card h3 { font-size: 0.9rem; font-weight: 700; margin: 0; }
+.termin-card p  { font-size: 0.82rem; margin-bottom: 4px; }
+
+.termin-card-actions {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #30363d);
+}
+
+.termin-card-actions button { width: 100%; }
+
+/* ── Moje prijave dashboard ─────────────── */
+.my-registrations-box {
+  background: var(--surface, #1c2128);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.my-reg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.my-reg-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-count {
+  background: var(--accent, #2f81f7);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.my-reg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.my-reg-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg2, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 7px;
+  gap: 12px;
+}
+
+.my-reg-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.my-reg-info strong { font-size: 0.88rem; }
+.my-reg-info span   { font-size: 0.78rem; }
+
+.btn-odjava {
+  background: rgba(248,81,73,0.1);
+  border: 1px solid rgba(248,81,73,0.4);
+  color: #f85149;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: auto;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-odjava:hover { background: rgba(248,81,73,0.2); }
+
+/* ── Ostali stilovi ─────────────────────── */
+.registered-badge {
+  background: rgba(47,129,247,0.15);
+  color: #58a6ff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.occ-wrap { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text2, #8b949e); margin-top: 6px; }
+.occ-bar  { width: 60px; height: 4px; background: var(--border, #30363d); border-radius: 2px; overflow: hidden; }
+.occ-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.occ-green  { background: #3fb950; }
+.occ-yellow { background: #d29922; }
+.occ-red    { background: #f85149; }
+
+.message-error { color: #f85149; font-size: 0.85rem; }
