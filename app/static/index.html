@@ -4,12 +4,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Cache-Control" content="no-store" />
   <title>Termini konzultacija</title>
-  <link rel="stylesheet" href="/static/style.css?v=auth-ui-v2" />
-  <script defer src="/static/script.js?v=auth-ui-v2"></script>
+  <link rel="stylesheet" href="/static/style.css" />
   <link rel="stylesheet" href="/static/termini_admin.css" />
-  <script defer src="/static/termini_admin.js"></script>
+  <script defer src="/static/script.js?v=auth-ui-v2"></script>
+  <script defer src="/static/termini_admin.js?v=prijave-ui-v1"></script>
 </head>
 
 <body>
@@ -46,7 +45,9 @@
       </div>
 
       <pre id="health-result">Klikni gumb za provjeru API-ja.</pre>
-      <p id="script-status" class="script-status">Frontend script se učitava...</p>
+      <div id="script-status" class="message-box" role="status">
+        Frontend script se učitava...
+      </div>
     </section>
 
     <section id="auth" class="grid two-columns">
@@ -57,12 +58,12 @@
           dodaju kroz seed podatke ili admin funkcionalnost.
         </p>
 
-        <form id="register-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
+        <form id="register-form" class="form-stack" autocomplete="on">
           <label for="register-first-name">Ime</label>
-          <input id="register-first-name" name="first_name" type="text" autocomplete="given-name" placeholder="stavi neko ime pls" />
+          <input id="register-first-name" name="first_name" type="text" autocomplete="given-name" placeholder="Ime" />
 
           <label for="register-last-name">Prezime</label>
-          <input id="register-last-name" name="last_name" type="text" autocomplete="family-name" placeholder="stavi neko prezime pls" />
+          <input id="register-last-name" name="last_name" type="text" autocomplete="family-name" placeholder="Prezime" />
 
           <label for="register-email">Email</label>
           <input id="register-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required />
@@ -81,7 +82,7 @@
           isto kao u Swagger Authorize prozoru.
         </p>
 
-        <form id="login-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
+        <form id="login-form" class="form-stack" autocomplete="on">
           <label for="login-email">Email</label>
           <input id="login-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required />
 
@@ -114,28 +115,16 @@
     </section>
 
     <section id="terms" class="card">
-      <div class="section-header">
-        <div>
-          <h2>Termini</h2>
-          <p class="muted">
-            Ovaj prikaz je samo priprema za dio osobe koja radi termine.
-            Ako endpoint <code>GET /termini</code> postoji, prikazat će se
-            osnovni JSON odgovor.
-          </p>
-        </div>
-        <button id="load-terms-button" type="button" class="secondary-button">
-          Učitaj termine
-        </button>
-      </div>
-      <pre id="terms-result">Termini još nisu učitani.</pre>
+      <h2>Termini</h2>
+      <p class="muted">
+        Učitavanje UI-a za termine...
+      </p>
     </section>
 
     <section id="admin" class="card">
       <h2>Admin panel</h2>
       <p class="muted">
-        Admin UI za kreiranje i uređivanje termina ide kasnije u dio osobe
-        zadužene za CRUD termina. Auth dio ovdje samo omogućuje da se zna
-        tko je prijavljen i koja mu je rola.
+        Učitavanje admin UI-a...
       </p>
     </section>
   </main>
