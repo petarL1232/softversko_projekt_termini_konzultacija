@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session, select
@@ -21,6 +23,68 @@ def normalize_email(email: str) -> str:
     """
 
     return email.strip().lower()
+
+
+EMAIL_PATTERN = re.compile(
+    r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@" r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$"
+)
+
+
+def validate_email_format(email: str) -> str:
+    """Validira i normalizira email za nove registracije.
+
+    Provjera se koristi samo kod registracije.
+    Login ostaje fleksibilan za postojece/demo korisnike.
+    """
+
+    normalized_email = normalize_email(email)
+
+    if not normalized_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email adresa je obavezna.",
+        )
+
+    if any(char.isspace() for char in normalized_email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email adresa ne smije sadrzavati razmake.",
+        )
+
+    if not EMAIL_PATTERN.fullmatch(normalized_email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email adresa nema ispravan format.",
+        )
+
+    local_part, domain = normalized_email.rsplit("@", 1)
+    domain_labels = domain.split(".")
+
+    if local_part.startswith(".") or local_part.endswith(".") or ".." in local_part:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email adresa nema ispravan format.",
+        )
+
+    if ".." in domain:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email domena nema ispravan format.",
+        )
+
+    if any(label.startswith("-") or label.endswith("-") for label in domain_labels):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email domena nema ispravan format.",
+        )
+
+    if len(domain_labels[-1]) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email domena mora imati ispravan nastavak.",
+        )
+
+    return normalized_email
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -265,7 +329,7 @@ def register_user(
     Admin i professor korisnike dodajemo kroz seed/demo podatke ili admin rute.
     """
 
-    email = normalize_email(payload.email)
+    email = validate_email_format(payload.email)
 
     validate_password_not_common(payload.password)
     validate_password_strength(payload.password)

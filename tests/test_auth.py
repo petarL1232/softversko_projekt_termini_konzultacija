@@ -131,6 +131,39 @@ def test_register_without_email_returns_422() -> None:
 
 
 @pytest.mark.parametrize(
+    "email",
+    [
+        "not-an-email",
+        "student@",
+        "@example.com",
+        "student@example",
+        "student example@example.com",
+        "student@example..com",
+        ".student@example.com",
+        "student.@example.com",
+        "student@-example.com",
+        "student@example-.com",
+        "student@example.c",
+    ],
+)
+def test_register_rejects_invalid_email_format(email: str) -> None:
+    with TestClient(app) as client:
+        response = register_user(client, email=email)
+
+    assert response.status_code == 400
+    assert "Email" in response.json()["detail"]
+
+
+def test_register_accepts_email_with_leading_and_trailing_spaces() -> None:
+    with TestClient(app) as client:
+        email = unique_email()
+        response = register_user(client, email=f" {email.upper()} ")
+
+    assert response.status_code == 201
+    assert response.json()["email"] == email
+
+
+@pytest.mark.parametrize(
     ("password", "expected_message"),
     [
         ("Short1!", "najmanje 12 znakova"),
