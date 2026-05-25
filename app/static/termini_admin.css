@@ -1,74 +1,221 @@
-/* ═══════════════════════════════════════════════
-   termini_admin.css — Osoba 3: stilovi za termine
-   Dodaj na kraj postojećeg style.css
-   ═══════════════════════════════════════════════ */
+/* termini_admin.css — dark mode verzija */
 
-/* Tablica termina */
 .termini-table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  margin-top: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.88rem;
+  margin-top: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #30363d;
+}
+
+.termini-table thead tr {
+  background: #161b22;
 }
 
 .termini-table th {
-  background: #f1f3f5;
-  text-align: left;
-  padding: 10px 12px;
-  font-size: 0.75rem;
+  padding: 11px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #666;
-  border-bottom: 2px solid #dee2e6;
+  text-align: left;
+  color: #8b949e;
+  border-bottom: 1px solid #30363d;
+  white-space: nowrap;
 }
 
 .termini-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e9ecef;
+  padding: 12px 14px;
+  border-bottom: 1px solid #21262d;
   vertical-align: middle;
+  color: #e6edf3;
+  background: #1c2128;
 }
 
-.termini-table tbody tr:hover {
-  background: #f8f9ff;
+.termini-table tbody tr:last-child td { border-bottom: none; }
+
+.termini-table tbody tr:hover td {
+  background: #22272e;
+  transition: background 0.15s;
+}
+
+/* Akcijski gumbi */
+.table-actions { display: flex; gap: 6px; align-items: center; }
+
+.table-actions .secondary-button {
+  padding: 5px 12px !important;
+  font-size: 0.78rem !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  border: 1px solid #3d444d !important;
+  color: #8b949e !important;
+  background: #22272e !important;
+  cursor: pointer;
+  width: auto !important;
+  transition: all 0.15s;
+}
+
+.table-actions .secondary-button:hover {
+  color: #e6edf3 !important;
+  border-color: #8b949e !important;
+}
+
+.table-actions .danger-button {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(248,81,73,0.4);
+  color: #f85149;
+  background: rgba(248,81,73,0.1);
+  cursor: pointer;
+  width: auto;
+  transition: all 0.15s;
+}
+
+.table-actions .danger-button:hover {
+  background: rgba(248,81,73,0.2);
+  border-color: #f85149;
+}
+
+/* Forma */
+.termin-forma {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.termin-forma h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #30363d;
+}
+
+.termin-forma label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8b949e;
+}
+
+.termin-forma input {
+  background: #0d1117;
+  border: 1px solid #3d444d;
+  border-radius: 7px;
+  color: #e6edf3;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+}
+
+.termin-forma input:focus {
+  outline: none;
+  border-color: #2f81f7;
+  box-shadow: 0 0 0 3px rgba(47,129,247,0.15);
 }
 
 /* Popunjenost bar */
-.occ-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.occ-bar {
-  width: 64px;
-  height: 5px;
-  background: #dee2e6;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.occ-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s;
-}
-
-.occ-green  { background: #198754; }
-.occ-yellow { background: #ffc107; }
-.occ-red    { background: #dc3545; }
+.occ-wrap { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #8b949e; }
+.occ-bar { width: 60px; height: 4px; background: #30363d; border-radius: 2px; overflow: hidden; }
+.occ-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.occ-green  { background: #3fb950; }
+.occ-yellow { background: #d29922; }
+.occ-red    { background: #f85149; }
 
 /* Status badge */
 .status-badge {
   display: inline-block;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
-.status-slobodno { background: #d1e7dd; color: #0f5132; }
-.status-skoro    { background: #fff3cd; color: #664d03; }
-.status-puno     { background: #f8d7da; color: #842029; }
-.status-unknown  { background: #e9ecef; color: #495057; }
+.status-slobodno { background: rgba(63,185,80,0.15); color: #3fb950; }
+.status-skoro    { background: rgba(210,153,34,0.15); color: #d29922; }
+.status-puno     { background: rgba(248,81,73,0.15);  color: #f85149; }
+.status-unknown  { background: #21262d; color: #8b949e; }
+
+/* Termin kartice */
+.termini-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.termin-card {
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.termin-card:hover {
+  border-color: #3d444d;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.termin-card.is-registered {
+  border-color: rgba(47,129,247,0.5);
+  background: rgba(47,129,247,0.05);
+}
+
+.termin-card h3 { font-size: 0.9rem; font-weight: 700; color: #e6edf3; margin-bottom: 10px; }
+.termin-card p  { font-size: 0.82rem; color: #8b949e; margin-bottom: 4px; }
+
+.termin-card-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #21262d;
+}
+
+.registered-badge {
+  display: inline-block;
+  background: rgba(47,129,247,0.15);
+  color: #58a6ff;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+/* Moje prijave */
+.my-registrations-box {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  color: #8b949e;
+}
+
+.registrations-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.registrations-list li { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #e6edf3; }
+
+.link-button {
+  background: none;
+  border: none;
+  color: #f85149;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  width: auto;
+}
+
+.admin-table-wrapper { border-radius: 10px; overflow: hidden; }
+.message-error { color: #f85149; font-size: 0.88rem; }
