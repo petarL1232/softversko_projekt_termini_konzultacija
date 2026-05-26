@@ -744,17 +744,29 @@ async function ucitajKorisnike() {
   lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
   try {
     const korisnici = await safeApiFetch("/auth/users");
-    if (!korisnici.length) { lista.innerHTML = "<p class='muted'>Nema korisnika.</p>"; return; }
+    if (!korisnici || !korisnici.length) { lista.innerHTML = "<p class='muted'>Nema korisnika.</p>"; return; }
     lista.innerHTML = `
       <table class="termini-table">
-        <thead><tr><th>ID</th><th>Ime</th><th>Email</th><th>Rola</th></tr></thead>
+        <thead><tr><th>ID</th><th>Ime</th><th>Email</th><th>Rola</th><th>Office ID</th><th>Akcija</th></tr></thead>
         <tbody>
-          ${korisnici.map(u => `<tr>
-            <td>${u.user_id ?? u.id}</td>
-            <td>${u.first_name ?? ""} ${u.last_name ?? ""}</td>
-            <td>${u.email}</td>
-            <td>${u.role}</td>
-          </tr>`).join("")}
+          ${korisnici.map(u => {
+            const userId = u.user_id ?? u.id;
+            return `<tr>
+              <td>${userId}</td>
+              <td>${u.first_name ?? ""} ${u.last_name ?? ""}</td>
+              <td>${u.email}</td>
+              <td>${u.role}</td>
+              <td>${u.office_id ?? "—"}</td>
+              <td class="table-actions">
+                <select id="role-select-${userId}" style="background:#22272e;color:#e6edf3;border:1px solid #3d444d;border-radius:6px;padding:4px 8px;font-size:0.78rem;">
+                  <option value="student" ${u.role === "student" ? "selected" : ""}>student</option>
+                  <option value="professor" ${u.role === "professor" ? "selected" : ""}>professor</option>
+                  <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
+                </select>
+                <button type="button" class="secondary-button" onclick="promijeniRolu(${userId})">Spremi</button>
+              </td>
+            </tr>`;
+          }).join("")}
         </tbody>
       </table>`;
   } catch (error) {
@@ -762,7 +774,24 @@ async function ucitajKorisnike() {
   }
 }
 
+async function promijeniRolu(userId) {
+  const select = document.querySelector(`#role-select-${userId}`);
+  if (!select) return;
+  const role = select.value;
+  try {
+    await safeApiFetch(`/auth/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+    prikaziAdminMsg(`Rola korisnika #${userId} promijenjena u "${role}".`, "ok");
+    await ucitajKorisnike();
+  } catch (error) {
+    prikaziAdminMsg(`Greška: ${error.message}`, "error");
+  }
+}
+
 window.ucitajKorisnike = ucitajKorisnike;
+window.promijeniRolu = promijeniRolu;
 
 
 window.registerOverlay = registerOverlay;

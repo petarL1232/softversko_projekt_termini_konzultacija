@@ -134,7 +134,8 @@ function renderRoleBadge(user) {
 function renderLoggedIn(user) {
   const name = getUserDisplayName(user);
   if (navbarCurrentUser) {
-    navbarCurrentUser.textContent = name; navbarCurrentUser.className = "user-pill logged-in";
+    navbarCurrentUser.textContent = name;
+    navbarCurrentUser.classList.add("logged-in");
   }
   renderRoleBadge(user);
 
