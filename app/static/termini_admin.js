@@ -229,11 +229,22 @@ async function loginOverlay() {
             localStorage.setItem("access_token", data.access_token);
         }
 
+        if (typeof loadCurrentUser === "function") {
+            trenutniKorisnik = await loadCurrentUser({ keepTokenFallback: true });
+        } else if (typeof userFromToken === "function") {
+            trenutniKorisnik = userFromToken(data.access_token);
+
+            if (typeof renderLoggedIn === "function" && trenutniKorisnik) {
+                renderLoggedIn(trenutniKorisnik);
+            }
+        }
+
         await initApp();
     } catch (error) {
         showMessage(msg, error.message, "error");
     }
 }
+
 
 async function registerOverlay() {
     const firstName = document.querySelector("#lo-ime")?.value?.trim();
@@ -282,7 +293,13 @@ function showMessage(el, message, type = "info") {
     el.style.display = "block";
 }
 
+
 function odjavaKorisnika() {
+    if (typeof logoutApp === "function") {
+        logoutApp();
+        return;
+    }
+
     if (typeof clearToken === "function") {
         clearToken();
     } else {
@@ -293,8 +310,14 @@ function odjavaKorisnika() {
     terminiData = [];
     mojePrijaveData = [];
     prijavljeniTerminiIds = new Set();
+
+    if (typeof renderLoggedOut === "function") {
+        renderLoggedOut();
+    }
+
     renderLoginUI();
 }
+
 
 // ============================================================
 // Student UI
@@ -1206,6 +1229,8 @@ async function spremiKorisnickuRolu(userId) {
         showMessage(msg, `Promjena role nije uspjela: ${error.message}`, "error");
     }
 }
+
+window.initApp = initApp;
 
 // ============================================================
 // Public globals used by inline handlers and older tests
