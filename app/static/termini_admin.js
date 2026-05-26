@@ -10,14 +10,12 @@ let mojePrijaveData = [];
 let prijavljeniTerminiIds = new Set();
 let trenutniKorisnik = null;
 
-// Filteri
 let filterProfesor = "";
 let filterPredmet = "";
 let filterSamoSlobodni = false;
 let filterSamoMoji = false;
 let searchQuery = "";
 
-// ── Init ────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   await initApp();
 });
@@ -44,11 +42,10 @@ async function initApp() {
   } else if (role === "admin") {
     renderAdminUI();
   } else {
-    renderStudentUI(); // fallback
+    renderStudentUI();
   }
 }
 
-// ── Helperi ─────────────────────────────────────────────────
 function safeApiFetch(path, options = {}) {
   if (typeof apiFetch !== "function") throw new Error("apiFetch nije učitan.");
   return apiFetch(path, options);
@@ -126,18 +123,15 @@ async function loadOccupancyForTerm(term) {
   }
 }
 
-// ── Login screen ─────────────────────────────────────────────
 function prikaziLoginScreen() {
   const main = document.querySelector("main");
   if (!main) return;
 
-  // Sakrij sve sekcije
-  ["#auth", "#terms", "#admin", "#current-user-panel", ".hero"].forEach(sel => {
+  ["#auth", "#terms", "#admin", "#prijave", "#current-user-panel"].forEach(sel => {
     const el = document.querySelector(sel);
     if (el) el.style.display = "none";
   });
 
-  // Prikaži login screen
   let loginScreen = document.querySelector("#login-screen-overlay");
   if (!loginScreen) {
     loginScreen = document.createElement("div");
@@ -146,9 +140,7 @@ function prikaziLoginScreen() {
       <div class="login-overlay-card">
         <div class="login-overlay-logo">TERMINI <span>// konzultacija</span></div>
         <p class="muted" style="margin-bottom:24px">Prijavite se za pristup sustavu</p>
-
         <div id="login-overlay-msg" class="message-box" style="margin-bottom:12px"></div>
-
         <div class="form-stack">
           <label>Email</label>
           <input type="email" id="lo-email" placeholder="student@unios.hr" autocomplete="email"/>
@@ -156,18 +148,15 @@ function prikaziLoginScreen() {
           <input type="password" id="lo-pass" placeholder="lozinka" autocomplete="current-password"/>
           <button type="button" onclick="loginOverlay()">Prijavi se</button>
         </div>
-
         <p class="muted" style="margin-top:16px;font-size:0.8rem;text-align:center">
-          Nemate račun? 
+          Nemate račun?
           <a href="#" onclick="prikaziRegisterOverlay()" style="color:#2f81f7">Registrirajte se</a>
         </p>
-      </div>
-    `;
+      </div>`;
     document.body.appendChild(loginScreen);
   }
 
   loginScreen.style.display = "flex";
-
   document.querySelector("#lo-pass")?.addEventListener("keydown", e => {
     if (e.key === "Enter") loginOverlay();
   });
@@ -192,10 +181,9 @@ function prikaziRegisterOverlay() {
       <button type="button" onclick="registerOverlay()">Registriraj se</button>
     </div>
     <p class="muted" style="margin-top:16px;font-size:0.8rem;text-align:center">
-      Već imate račun? 
+      Već imate račun?
       <a href="#" onclick="prikaziLoginScreen()" style="color:#2f81f7">Prijavite se</a>
-    </p>
-  `;
+    </p>`;
 }
 
 async function loginOverlay() {
@@ -217,10 +205,8 @@ async function loginOverlay() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Greška pri prijavi.");
-
     if (typeof setToken === "function") setToken(data.access_token);
     else localStorage.setItem("access_token", data.access_token);
-
     sakriLoginScreen();
     await initApp();
   } catch (e) {
@@ -248,7 +234,6 @@ async function registerOverlay() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Greška pri registraciji.");
-
     if (msg) { msg.textContent = "Registracija uspješna! Sada se prijavite."; msg.dataset.type = "ok"; }
     setTimeout(() => prikaziLoginScreen(), 1500);
   } catch (e) {
@@ -271,7 +256,6 @@ function odjavaKorisnika() {
   location.reload();
 }
 
-// ── STUDENT UI ────────────────────────────────────────────────
 function renderStudentUI() {
   const main = document.querySelector("main");
   if (!main) return;
@@ -297,7 +281,7 @@ function renderStudentUI() {
     <div class="card">
       <div class="section-header">
         <div>
-          <h2>Termini</h2>
+          <h2>Termini konzultacija</h2>
           <p class="muted">Pregledajte i prijavite se na dostupne termine.</p>
         </div>
         <button type="button" class="secondary-button" onclick="ucitajTermine()">↺ Osvježi</button>
@@ -305,9 +289,10 @@ function renderStudentUI() {
 
       <div id="terms-msg" class="message-box" role="status"></div>
 
-      <!-- Filteri -->
       <div class="filters-bar">
-        <input type="text" id="search-input" placeholder="🔍 Pretraži po profesor ID ili predmet ID..."/>
+        <div class="filter-search">
+          <input type="text" id="search-input" placeholder="🔍 Pretraži po profesor ID ili predmet ID..."/>
+        </div>
         <div class="filter-controls">
           <input type="number" id="filter-profesor" placeholder="Profesor ID" min="1"/>
           <input type="number" id="filter-predmet" placeholder="Predmet ID" min="1"/>
@@ -318,15 +303,13 @@ function renderStudentUI() {
       </div>
 
       <div id="termini-lista">Klikni osvježi za učitavanje termina.</div>
-    </div>
-  `;
+    </div>`;
 
   setupFilterListeners();
   ucitajTermine();
   osvjeziMojePrijave();
 }
 
-// ── PROFESOR UI ───────────────────────────────────────────────
 function renderProfesorUI() {
   const main = document.querySelector("main");
   if (!main) return;
@@ -369,123 +352,71 @@ function renderProfesorUI() {
       </div>
 
       <div id="admin-termini-lista">Učitavanje...</div>
-    </div>
-  `;
+    </div>`;
 
   ucitajProfesorTermine();
 }
 
-async function ucitajProfesorTermine() {
-  const lista = document.querySelector("#admin-termini-lista");
-  if (!lista) return;
-  lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
-
-  try {
-    const svi = await safeApiFetch("/termini");
-    const profesorId = trenutniKorisnik?.user_id ?? trenutniKorisnik?.id;
-    terminiData = svi.filter(t => Number(t.professor_id) === Number(profesorId));
-    await Promise.all(terminiData.map(async t => { t._occ = await loadOccupancyForTerm(t); }));
-    renderAdminTabela(lista);
-  } catch (error) {
-    lista.innerHTML = `<p class="message-error">Greška: ${error.message}</p>`;
-  }
-}
-
-async function spremiProfesorTermin() {
-  const subj  = Number.parseInt(document.querySelector("#f-subj")?.value, 10);
-  const start = document.querySelector("#f-start")?.value;
-  const end   = document.querySelector("#f-end")?.value;
-  const profesorId = trenutniKorisnik?.user_id ?? trenutniKorisnik?.id;
-
-  if (!subj) { prikaziAdminMsg("Predmet je obavezan.", "error"); return; }
-  if (!start || !end) { prikaziAdminMsg("Datum i vrijeme su obavezni.", "error"); return; }
-  if (new Date(start) >= new Date(end)) { prikaziAdminMsg("Početak mora biti prije kraja.", "error"); return; }
-
-  const payload = { professor_id: profesorId, subject_id: subj, start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString() };
-
-  try {
-    if (editingTerminId) {
-      await safeApiFetch(`/termini/${editingTerminId}`, { method: "PUT", body: JSON.stringify(payload) });
-      prikaziAdminMsg("Termin ažuriran!", "ok");
-    } else {
-      await safeApiFetch("/termini", { method: "POST", body: JSON.stringify(payload) });
-      prikaziAdminMsg("Termin kreiran!", "ok");
-    }
-    zatvoriFormu();
-    await ucitajProfesorTermine();
-  } catch (error) {
-    prikaziAdminMsg(`Greška: ${error.message}`, "error");
-  }
-}
-
-// ── ADMIN UI ──────────────────────────────────────────────────
 function renderAdminUI() {
-    const main = document.querySelector("main");
-    if (!main) return;
+  const main = document.querySelector("main");
+  if (!main) return;
 
-    main.innerHTML = `
-        <section class="app-shell admin-shell">
-            <div class="role-header">
-                <span class="role-badge admin">Admin</span>
-                <h1>${trenutniKorisnik?.first_name || ""} ${trenutniKorisnik?.last_name || ""}</h1>
-                <p>${trenutniKorisnik?.email || ""}</p>
-                <button class="btn btn-outline-danger btn-sm" onclick="odjavaKorisnika()">Odjava</button>
-            </div>
+  main.innerHTML = `
+    <div class="role-header">
+      <div>
+        <div class="role-badge role-admin">Admin</div>
+        <h1>${trenutniKorisnik?.first_name || ""} ${trenutniKorisnik?.last_name || ""}</h1>
+        <p class="muted">${trenutniKorisnik?.email || ""}</p>
+      </div>
+      <button type="button" class="btn-odjava-top" onclick="odjavaKorisnika()">Odjava</button>
+    </div>
 
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <h2>Upravljanje terminima</h2>
-                        <p>Pregled svih termina. Kreiranje, uređivanje i brisanje.</p>
-                    </div>
-                    <div class="panel-actions">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="ucitajAdminTermine()">↺ Osvježi</button>
-                        <button class="btn btn-primary btn-sm" onclick="otvoriFormuKreiranje()">+ Novi termin</button>
-                    </div>
-                </div>
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <h2>Upravljanje terminima</h2>
+          <p class="muted">Pregled svih termina. Kreiranje, uređivanje i brisanje.</p>
+        </div>
+        <div class="terms-actions">
+          <button type="button" class="secondary-button" onclick="ucitajAdminTermine()">↺ Osvježi</button>
+          <button type="button" onclick="otvoriFormuKreiranje()">+ Novi termin</button>
+        </div>
+      </div>
 
-                <div id="termin-forma" class="form-card" style="display:none">
-                    <h3 id="forma-naslov">Novi termin</h3>
-                    <div class="form-grid">
-                        <label>Profesor (User ID)<input id="f-prof" type="number" min="1"></label>
-                        <label>Predmet (Subject ID)<input id="f-subj" type="number" min="1"></label>
-                        <label>Početak termina<input id="f-start" type="datetime-local"></label>
-                        <label>Kraj termina<input id="f-end" type="datetime-local"></label>
-                    </div>
-                    <div class="form-actions">
-                        <button id="forma-btn" class="btn btn-success btn-sm" onclick="spremiTermin()">Kreiraj</button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="zatvoriFormu()">Odustani</button>
-                    </div>
-                </div>
+      <div id="admin-msg" class="message-box" role="status"></div>
 
-                <div id="admin-msg" class="msg-box" style="display:none"></div>
-                <div id="admin-termini-lista" class="table-wrap">Učitavanje...</div>
-            </section>
+      <div id="termin-forma" class="termin-forma" style="display:none;">
+        <h3 id="forma-naslov">Novi termin</h3>
+        <div class="grid two-columns">
+          <label>Profesor (User ID)<input id="f-prof" type="number" min="1"/></label>
+          <label>Predmet (Subject ID)<input id="f-subj" type="number" min="1"/></label>
+          <label>Početak termina<input id="f-start" type="datetime-local"/></label>
+          <label>Kraj termina<input id="f-end" type="datetime-local"/></label>
+        </div>
+        <div class="actions-row" style="margin-top:14px">
+          <button id="forma-btn" type="button" onclick="spremiTermin()">Kreiraj</button>
+          <button type="button" class="secondary-button" onclick="zatvoriFormu()">Odustani</button>
+        </div>
+      </div>
 
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <h2>Upravljanje korisnicima</h2>
-                        <p>Promjena uloge korisnika: student, professor ili admin.</p>
-                    </div>
-                    <div class="panel-actions">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="ucitajKorisnikeZaRole()">↺ Osvježi korisnike</button>
-                    </div>
-                </div>
+      <div id="admin-termini-lista">Učitavanje...</div>
+    </div>
 
-                <div id="users-msg" class="msg-box" style="display:none"></div>
-                <div id="admin-users-lista" class="table-wrap">Učitavanje korisnika...</div>
-            </section>
-        </section>
-    `;
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <h2>Upravljanje korisnicima</h2>
+          <p class="muted">Pregled korisnika i promjena rola.</p>
+        </div>
+        <button type="button" class="secondary-button" onclick="ucitajKorisnike()">↺ Osvježi</button>
+      </div>
+      <div id="admin-korisnici-lista">Učitavanje...</div>
+    </div>
 
-    ucitajAdminTermine();
-    ucitajKorisnikeZaRole();
+  ucitajAdminTermine();
+  ucitajKorisnike();
 }
 
-// ── ZAJEDNIČKI ────────────────────────────────────────────────
-
-// Filteri
 function filtrirajTermine(termini) {
   return termini.filter(t => {
     const termId = Number(getTermId(t));
@@ -531,7 +462,6 @@ async function ucitajTermine() {
   const lista = document.querySelector("#termini-lista");
   if (!lista) return;
   lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
-
   try {
     terminiData = await safeApiFetch("/termini");
     await loadMojePrijaveSilently();
@@ -548,7 +478,6 @@ function renderFilteredTermini() {
   if (!lista) return;
   const filtered = filtrirajTermine(terminiData);
   if (!filtered.length) { lista.innerHTML = "<p class='muted'>Nema termina koji odgovaraju filterima.</p>"; return; }
-
   const groups = groupByWeek(filtered);
   let html = "";
   for (const [weekKey, termini] of groups) {
@@ -631,12 +560,10 @@ async function osvjeziMojePrijave() {
 function renderMojePrijave() {
   const container = document.querySelector("#moje-prijave");
   if (!container) return;
-
   if (!mojePrijaveData.length) {
     container.innerHTML = "<p class='muted'>Trenutno nemaš aktivnih prijava.</p>";
     return;
   }
-
   container.innerHTML = `
     <div class="my-reg-list">
       ${mojePrijaveData.map(p => {
@@ -656,7 +583,6 @@ function renderMojePrijave() {
     </div>`;
 }
 
-// Admin/Profesor tablica
 async function ucitajAdminTermine() {
   const lista = document.querySelector("#admin-termini-lista");
   if (!lista) return;
@@ -670,31 +596,47 @@ async function ucitajAdminTermine() {
   }
 }
 
+async function ucitajProfesorTermine() {
+  const lista = document.querySelector("#admin-termini-lista");
+  if (!lista) return;
+  lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
+  try {
+    const svi = await safeApiFetch("/termini");
+    const profesorId = trenutniKorisnik?.user_id ?? trenutniKorisnik?.id;
+    terminiData = svi.filter(t => Number(t.professor_id) === Number(profesorId));
+    await Promise.all(terminiData.map(async t => { t._occ = await loadOccupancyForTerm(t); }));
+    renderAdminTabela(lista);
+  } catch (error) {
+    lista.innerHTML = `<p class="message-error">Greška: ${error.message}</p>`;
+  }
+}
+
 function renderAdminTabela(container) {
   if (!terminiData.length) { container.innerHTML = "<p class='muted'>Nema termina.</p>"; return; }
   const sorted = [...terminiData].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
   container.innerHTML = `
-    <table class="termini-table">
-      <thead><tr><th>#</th><th>Profesor ID</th><th>Predmet ID</th><th>Početak</th><th>Kraj</th><th>Popunjenost</th><th>Akcije</th></tr></thead>
-      <tbody>
-        ${sorted.map(t => {
-          const tId = getTermId(t);
-          const occ = t._occ;
-          return `<tr>
-            <td>#${tId}</td><td>${t.professor_id}</td><td>${t.subject_id}</td>
-            <td>${fmtDateTime(t.start_time)}</td><td>${fmtDateTime(t.end_time)}</td>
-            <td>${occ ? `${occ.registered_students}/${occ.capacity}` : "?"}</td>
-            <td class="table-actions">
-              <button type="button" class="secondary-button" onclick="otvoriFormuUredivanje(${tId})">Uredi</button>
-              <button type="button" class="danger-button" onclick="obrisiTermin(${tId})">Briši</button>
-            </td>
-          </tr>`;
-        }).join("")}
-      </tbody>
-    </table>`;
+    <div class="admin-table-wrapper">
+      <table class="termini-table">
+        <thead><tr><th>#</th><th>Profesor ID</th><th>Predmet ID</th><th>Početak</th><th>Kraj</th><th>Popunjenost</th><th>Akcije</th></tr></thead>
+        <tbody>
+          ${sorted.map(t => {
+            const tId = getTermId(t);
+            const occ = t._occ;
+            return `<tr>
+              <td>#${tId}</td><td>${t.professor_id}</td><td>${t.subject_id}</td>
+              <td>${fmtDateTime(t.start_time)}</td><td>${fmtDateTime(t.end_time)}</td>
+              <td>${occ ? `${occ.registered_students}/${occ.capacity}` : "?"}</td>
+              <td class="table-actions">
+                <button type="button" class="secondary-button" onclick="otvoriFormuUredivanje(${tId})">Uredi</button>
+                <button type="button" class="danger-button" onclick="obrisiTermin(${tId})">Briši</button>
+              </td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>`;
 }
 
-// Forma
 function otvoriFormuKreiranje() {
   editingTerminId = null;
   document.querySelector("#forma-naslov").textContent = "Novi termin";
@@ -731,11 +673,9 @@ async function spremiTermin() {
   const subj  = Number.parseInt(document.querySelector("#f-subj")?.value, 10);
   const start = document.querySelector("#f-start")?.value;
   const end   = document.querySelector("#f-end")?.value;
-
   if (!prof || !subj) { prikaziAdminMsg("Profesor i predmet su obavezni.", "error"); return; }
   if (!start || !end) { prikaziAdminMsg("Datum i vrijeme su obavezni.", "error"); return; }
   if (new Date(start) >= new Date(end)) { prikaziAdminMsg("Početak mora biti prije kraja.", "error"); return; }
-
   const payload = { professor_id: prof, subject_id: subj, start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString() };
   try {
     if (editingTerminId) {
@@ -752,8 +692,32 @@ async function spremiTermin() {
   }
 }
 
+async function spremiProfesorTermin() {
+  const subj  = Number.parseInt(document.querySelector("#f-subj")?.value, 10);
+  const start = document.querySelector("#f-start")?.value;
+  const end   = document.querySelector("#f-end")?.value;
+  const profesorId = trenutniKorisnik?.user_id ?? trenutniKorisnik?.id;
+  if (!subj) { prikaziAdminMsg("Predmet je obavezan.", "error"); return; }
+  if (!start || !end) { prikaziAdminMsg("Datum i vrijeme su obavezni.", "error"); return; }
+  if (new Date(start) >= new Date(end)) { prikaziAdminMsg("Početak mora biti prije kraja.", "error"); return; }
+  const payload = { professor_id: profesorId, subject_id: subj, start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString() };
+  try {
+    if (editingTerminId) {
+      await safeApiFetch(`/termini/${editingTerminId}`, { method: "PUT", body: JSON.stringify(payload) });
+      prikaziAdminMsg("Termin ažuriran!", "ok");
+    } else {
+      await safeApiFetch("/termini", { method: "POST", body: JSON.stringify(payload) });
+      prikaziAdminMsg("Termin kreiran!", "ok");
+    }
+    zatvoriFormu();
+    await ucitajProfesorTermine();
+  } catch (error) {
+    prikaziAdminMsg(`Greška: ${error.message}`, "error");
+  }
+}
+
 async function obrisiTermin(id) {
-  if (!confirm(`Obrisati termin #${id}?`)) return;
+  if (!confirm(`Obrisati termin #${id}? Ova radnja je nepovratna.`)) return;
   try {
     await safeApiFetch(`/termini/${id}`, { method: "DELETE" });
     prikaziAdminMsg(`Termin #${id} obrisan.`, "ok");
@@ -774,8 +738,62 @@ function prikaziAdminMsg(message, type) {
   setTimeout(() => { el.style.display = "none"; }, 4000);
 }
 
-// Eksponiranje
-window.loginOverlay = loginOverlay;
+async function ucitajKorisnike() {
+  const lista = document.querySelector("#admin-korisnici-lista");
+  if (!lista) return;
+  lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
+  try {
+    const korisnici = await safeApiFetch("/auth/users");
+    if (!korisnici || !korisnici.length) { lista.innerHTML = "<p class='muted'>Nema korisnika.</p>"; return; }
+    lista.innerHTML = `
+      <table class="termini-table">
+        <thead><tr><th>ID</th><th>Ime</th><th>Email</th><th>Rola</th><th>Office ID</th><th>Akcija</th></tr></thead>
+        <tbody>
+          ${korisnici.map(u => {
+            const userId = u.user_id ?? u.id;
+            return `<tr>
+              <td>${userId}</td>
+              <td>${u.first_name ?? ""} ${u.last_name ?? ""}</td>
+              <td>${u.email}</td>
+              <td>${u.role}</td>
+              <td>${u.office_id ?? "—"}</td>
+              <td class="table-actions">
+                <select id="role-select-${userId}" style="background:#22272e;color:#e6edf3;border:1px solid #3d444d;border-radius:6px;padding:4px 8px;font-size:0.78rem;">
+                  <option value="student" ${u.role === "student" ? "selected" : ""}>student</option>
+                  <option value="professor" ${u.role === "professor" ? "selected" : ""}>professor</option>
+                  <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
+                </select>
+                <button type="button" class="secondary-button" onclick="spremiKorisnickuRolu(${userId})">Spremi</button>
+              </td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>`;
+  } catch (error) {
+    lista.innerHTML = `<p class="message-error">Greška: ${error.message}</p>`;
+  }
+}
+
+async function spremiKorisnickuRolu(userId) {
+  const select = document.querySelector(`#role-select-${userId}`);
+  if (!select) return;
+  const role = select.value;
+  try {
+    await safeApiFetch(`/auth/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+    prikaziAdminMsg(`Rola korisnika #${userId} promijenjena u "${role}".`, "ok");
+    await ucitajKorisnike();
+  } catch (error) {
+    prikaziAdminMsg(`Greška: ${error.message}`, "error");
+  }
+}
+
+window.ucitajKorisnike = ucitajKorisnike;
+window.spremiKorisnickuRolu = spremiKorisnickuRolu;
+
+
 window.registerOverlay = registerOverlay;
 window.prikaziRegisterOverlay = prikaziRegisterOverlay;
 window.prikaziLoginScreen = prikaziLoginScreen;
@@ -793,166 +811,11 @@ window.zatvoriFormu = zatvoriFormu;
 window.spremiTermin = spremiTermin;
 window.spremiProfesorTermin = spremiProfesorTermin;
 window.obrisiTermin = obrisiTermin;
-// Backward-compatible admin render hook for static UI tests.
-// Main admin UI may be rendered by newer role-based functions,
-// but this name is kept so older tests and integrations still find it.
+
 if (typeof window.renderAdminSection !== "function") {
   window.renderAdminSection = function renderAdminSection() {
-    if (typeof window.renderAdminPanel === "function") {
-      return window.renderAdminPanel();
-    }
-
-    if (typeof window.renderAdminTermini === "function") {
-      return window.renderAdminTermini();
-    }
-
+    if (typeof window.renderAdminPanel === "function") return window.renderAdminPanel();
+    if (typeof window.renderAdminTermini === "function") return window.renderAdminTermini();
     return null;
   };
 }
-// ── ADMIN ROLE MANAGEMENT UI ─────────────────────────────────
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-function prikaziUsersMsg(message, type) {
-    const el = document.querySelector("#users-msg");
-    if (!el) return;
-
-    el.textContent = message;
-    el.dataset.type = type;
-    el.style.display = "block";
-
-    setTimeout(() => {
-        el.style.display = "none";
-    }, 4000);
-}
-
-async function ucitajKorisnikeZaRole() {
-    const container = document.querySelector("#admin-users-lista");
-    if (!container) return;
-
-    container.innerHTML = "<p>Učitavanje korisnika...</p>";
-
-    try {
-        const users = await safeApiFetch("/auth/users");
-
-        if (!Array.isArray(users) || users.length === 0) {
-            container.innerHTML = "<p>Nema korisnika za prikaz.</p>";
-            return;
-        }
-
-        container.innerHTML = `
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Korisnik</th>
-                        <th>Email</th>
-                        <th>Trenutna rola</th>
-                        <th>Nova rola</th>
-                        <th>Office ID</th>
-                        <th>Akcija</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${users.map(renderKorisnikRoleRow).join("")}
-                </tbody>
-            </table>
-        `;
-    } catch (error) {
-        container.innerHTML = `<p class="error-text">Greška: ${escapeHtml(error.message)}</p>`;
-    }
-}
-
-function renderKorisnikRoleRow(user) {
-    const userId = user.user_id ?? user.id;
-    const role = normalizeRole(user.role);
-    const officeId = user.office_id ?? "";
-
-    return `
-        <tr>
-            <td>#${escapeHtml(userId)}</td>
-            <td>${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}</td>
-            <td>${escapeHtml(user.email)}</td>
-            <td><span class="role-badge ${escapeHtml(role)}">${escapeHtml(role)}</span></td>
-            <td>
-                <select id="role-${escapeHtml(userId)}" onchange="onRoleSelectChange(${Number(userId)})">
-                    <option value="student" ${role === "student" ? "selected" : ""}>student</option>
-                    <option value="professor" ${role === "professor" ? "selected" : ""}>professor</option>
-                    <option value="admin" ${role === "admin" ? "selected" : ""}>admin</option>
-                </select>
-            </td>
-            <td>
-                <input
-                    id="office-${escapeHtml(userId)}"
-                    type="number"
-                    min="1"
-                    value="${escapeHtml(officeId)}"
-                    placeholder="office_id"
-                    ${role === "professor" ? "" : "disabled"}
-                >
-            </td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="spremiKorisnickuRolu(${Number(userId)})">
-                    Spremi rolu
-                </button>
-            </td>
-        </tr>
-    `;
-}
-
-function onRoleSelectChange(userId) {
-    const roleSelect = document.querySelector(`#role-${userId}`);
-    const officeInput = document.querySelector(`#office-${userId}`);
-
-    if (!roleSelect || !officeInput) return;
-
-    const role = normalizeRole(roleSelect.value);
-    officeInput.disabled = role !== "professor";
-
-    if (role !== "professor") {
-        officeInput.value = "";
-    }
-}
-
-async function spremiKorisnickuRolu(userId) {
-    const roleSelect = document.querySelector(`#role-${userId}`);
-    const officeInput = document.querySelector(`#office-${userId}`);
-
-    if (!roleSelect) return;
-
-    const role = normalizeRole(roleSelect.value);
-    const payload = { role };
-
-    if (role === "professor") {
-        const officeId = Number.parseInt(officeInput?.value, 10);
-
-        if (!officeId) {
-            prikaziUsersMsg("Za rolu professor moraš unijeti office_id.", "error");
-            return;
-        }
-
-        payload.office_id = officeId;
-    }
-
-    try {
-        await safeApiFetch(`/auth/users/${userId}/role`, {
-            method: "PATCH",
-            body: JSON.stringify(payload),
-        });
-
-        prikaziUsersMsg(`Rola korisnika #${userId} je ažurirana.`, "ok");
-        await ucitajKorisnikeZaRole();
-    } catch (error) {
-        prikaziUsersMsg(`Promjena role nije uspjela: ${error.message}`, "error");
-    }
-}
-
-window.ucitajKorisnikeZaRole = ucitajKorisnikeZaRole;
-window.spremiKorisnickuRolu = spremiKorisnickuRolu;
-window.onRoleSelectChange = onRoleSelectChange;

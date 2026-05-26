@@ -1,378 +1,481 @@
-// Minimalni frontend helperi.
-// TODO osoba 1: login/register treba spremati token pomocu setToken(token).
-// TODO osoba 3: admin UI treba koristiti apiFetch("/termini", ...).
-// TODO osoba 4: prijava/odjava treba koristiti apiFetch("/termini/{id}/prijava", ...).
+// ============================================================
+// Zajednički helperi
+// ============================================================
 
 const TOKEN_STORAGE_KEY = "access_token";
-
-const healthButton = document.querySelector("#health-button");
-const refreshUserButton = document.querySelector("#refresh-user-button");
-const healthResult = document.querySelector("#health-result");
-const registerForm = document.querySelector("#register-form");
-const registerSubmitButton = document.querySelector("#register-submit");
-const loginForm = document.querySelector("#login-form");
-const loginSubmitButton = document.querySelector("#login-submit");
-const logoutButton = document.querySelector("#logout-button");
-const currentUserBox = document.querySelector("#current-user");
-const authMessage = document.querySelector("#auth-message");
-const loadTermsButton = document.querySelector("#load-terms-button");
-const termsResult = document.querySelector("#terms-result");
 const navbarCurrentUser = document.querySelector("#navbar-current-user");
-const scriptStatus = document.querySelector("#script-status");
 
-function getToken() {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-
-function setToken(token) {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
-}
-
-function clearToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
-
-function setMessage(message, type = "info") {
-  if (!authMessage) {
-    return;
-  }
-
-  authMessage.textContent = message;
-  authMessage.dataset.type = type;
-}
-
-function clearMessage() {
-  if (!authMessage) {
-    return;
-  }
-
-  authMessage.textContent = "";
-  delete authMessage.dataset.type;
-}
-
-function setButtonLoading(button, isLoading, loadingText) {
-  if (!button) {
-    return;
-  }
-
-  if (isLoading) {
-    button.dataset.originalText = button.textContent || "";
-    button.textContent = loadingText;
-    button.disabled = true;
-    return;
-  }
-
-  button.textContent = button.dataset.originalText || button.textContent;
-  button.disabled = false;
-  delete button.dataset.originalText;
-}
-
-function parseJwtPayload(token) {
-  try {
-    const [, payloadPart] = token.split(".");
-    const normalizedPayload = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-    const decodedPayload = atob(normalizedPayload);
-    const jsonPayload = decodeURIComponent(
-      decodedPayload
-        .split("")
-        .map((character) => {
-          const hex = character.charCodeAt(0).toString(16).padStart(2, "0");
-          return `%${hex}`;
-        })
-        .join(""),
-    );
-
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
-
-function userFromToken(token) {
-  const payload = parseJwtPayload(token);
-
-  if (!payload) {
-    return null;
-  }
-
-  return {
-    user_id: payload.user_id ?? null,
-    first_name: payload.first_name ?? "",
-    last_name: payload.last_name ?? "",
-    email: payload.sub ?? payload.email ?? "nepoznat-email",
-    role: payload.role ?? "unknown",
-    office_id: payload.office_id ?? null,
-    source: "token",
-  };
-}
-
-function getUserDisplayName(user) {
-  const fullName = [user.first_name, user.last_name]
-    .filter(Boolean)
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(" ");
-
-  return fullName || user.email || "Nepoznati korisnik";
-}
-
-function formatUser(user) {
-  const id = user.user_id ?? user.id;
-  const displayName = getUserDisplayName(user);
-  const sourceMessage = user.source === "token" ? "Podaci privremeno procitani iz JWT tokena." : "Podaci procitani preko GET /auth/me.";
-
-  return [
-    `ID: ${id ?? "n/a"}`,
-    `Ime: ${displayName}`,
-    `Email: ${user.email ?? "n/a"}`,
-    `Rola: ${user.role ?? "n/a"}`,
-    `Office ID: ${user.office_id ?? "n/a"}`,
-    sourceMessage,
-  ].join("\n");
-}
+function getToken() { return localStorage.getItem(TOKEN_STORAGE_KEY); }
+function setToken(token) { localStorage.setItem(TOKEN_STORAGE_KEY, token); }
+function clearToken() { localStorage.removeItem(TOKEN_STORAGE_KEY); }
 
 async function apiFetch(path, options = {}) {
   const token = getToken();
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(path, {
-    ...options,
-    headers,
-  });
-
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(path, { ...options, headers });
   const data = await response.json().catch(() => null);
-
   if (!response.ok) {
-    const message = data?.detail || data?.message || "API greska";
-    const error = new Error(message);
+    const error = new Error(data?.detail || data?.message || "API greška");
     error.status = response.status;
     throw error;
   }
-
   return data;
 }
 
 async function apiFormFetch(path, formBody) {
   const response = await fetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: formBody,
   });
-
   const data = await response.json().catch(() => null);
-
   if (!response.ok) {
-    const message = data?.detail || data?.message || "API greska";
-    const error = new Error(message);
+    const error = new Error(data?.detail || data?.message || "API greška");
     error.status = response.status;
     throw error;
   }
-
   return data;
 }
 
-async function testHealth() {
-  if (!healthResult) {
-    return;
-  }
+function formatDateTime(iso) {
+  if (!iso) return "?";
+  return new Date(iso).toLocaleString("hr-HR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
 
-  healthResult.textContent = "Ucitavanje...";
+function setMessage(elId, message, type = "info") {
+  const el = document.querySelector(`#${elId}`);
+  if (!el) return;
+  el.textContent = message;
+  el.dataset.type = type;
+}
 
-  try {
-    const data = await apiFetch("/health");
-    healthResult.textContent = JSON.stringify(data, null, 2);
-  } catch (error) {
-    healthResult.textContent = `Greska: ${error.message}`;
+function clearMessage(elId) {
+  const el = document.querySelector(`#${elId}`);
+  if (!el) return;
+  el.textContent = "";
+  delete el.dataset.type;
+}
+
+function setButtonLoading(btn, loading, text) {
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.orig = btn.textContent;
+    btn.textContent = text;
+    btn.disabled = true;
+  } else {
+    btn.textContent = btn.dataset.orig || btn.textContent;
+    btn.disabled = false;
+    delete btn.dataset.orig;
   }
 }
 
-function validateFormField(form, fieldName, label) {
-  const value = new FormData(form).get(fieldName)?.toString().trim() || "";
-
-  if (!value) {
-    throw new Error(`${label} je obavezan.`);
-  }
-
+function validateFormField(form, name, label) {
+  const value = new FormData(form).get(name)?.toString().trim() || "";
+  if (!value) throw new Error(`${label} je obavezan.`);
   return value;
 }
 
-async function registerUser(event) {
-  event?.preventDefault();
-  clearMessage();
+// ============================================================
+// JWT / korisnik
+// ============================================================
 
+function parseJwtPayload(token) {
   try {
-    const firstName = validateFormField(registerForm, "first_name", "Ime");
-    const lastName = validateFormField(registerForm, "last_name", "Prezime");
-    const email = validateFormField(registerForm, "email", "Email").toLowerCase();
-    const password = validateFormField(registerForm, "password", "Lozinka");
-
-    const payload = {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      password,
-    };
-
-    setButtonLoading(registerSubmitButton, true, "Registriram...");
-
-    const user = await apiFetch("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-
-    registerForm.reset();
-    setMessage(`Registracija uspjela za ${user.email}. Sada se loginaj.`, "ok");
-  } catch (error) {
-    setMessage(`Registracija nije uspjela: ${error.message}`, "error");
-  } finally {
-    setButtonLoading(registerSubmitButton, false);
-  }
+    const [, part] = token.split(".");
+    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch { return null; }
 }
 
-async function loginUser(event) {
-  event?.preventDefault();
-  clearMessage();
+function userFromToken(token) {
+  const p = parseJwtPayload(token);
+  if (!p) return null;
+  return {
+    user_id: p.user_id ?? null,
+    first_name: p.first_name ?? "",
+    last_name: p.last_name ?? "",
+    email: p.sub ?? p.email ?? "",
+    role: p.role ?? "student",
+    office_id: p.office_id ?? null,
+    source: "token",
+  };
+}
 
-  try {
-    const email = validateFormField(loginForm, "email", "Email").toLowerCase();
-    const password = validateFormField(loginForm, "password", "Lozinka");
-    const body = new URLSearchParams();
+function getUserDisplayName(user) {
+  const full = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
+  return full || user.email || "Korisnik";
+}
 
-    body.set("username", email);
-    body.set("password", password);
+function isAdmin(user) {
+  return user?.role === "admin";
+}
 
-    setButtonLoading(loginSubmitButton, true, "Logiram...");
+function isProfessor(user) {
+  return user?.role === "professor" || user?.role === "profesor";
+}
 
-    const data = await apiFormFetch("/auth/login", body);
-    setToken(data.access_token);
-    loginForm.reset();
+// ============================================================
+// UI – renderiranje korisnika i role
+// ============================================================
 
-    const tokenUser = userFromToken(data.access_token);
-    if (tokenUser) {
-      renderLoggedIn(tokenUser);
-    }
+function renderRoleBadge(user) {
+  const badge = document.querySelector("#navbar-role-badge");
+  if (!badge) return;
+  const role = user?.role ?? "";
+  const labels = { admin: "Admin", professor: "Profesor", profesor: "Profesor", student: "Student" };
+  badge.textContent = labels[role] ?? role;
+  badge.className = `role-badge ${role}`;
+  badge.style.display = role ? "inline-block" : "none";
+}
 
-    setMessage("Login uspjesan. Token je spremljen u localStorage.", "ok");
-    await loadCurrentUser({ keepTokenFallback: true });
-  } catch (error) {
-    setMessage(`Login nije uspio: ${error.message}`, "error");
-  } finally {
-    setButtonLoading(loginSubmitButton, false);
+function renderLoggedIn(user) {
+  const name = getUserDisplayName(user);
+  if (navbarCurrentUser) {
+    navbarCurrentUser.textContent = name;
+    navbarCurrentUser.classList.add("logged-in");
   }
+  renderRoleBadge(user);
+
+  const logoutBtn = document.querySelector("#logout-button");
+  if (logoutBtn) logoutBtn.style.display = "inline-block";
+
+  const userPanel = document.querySelector("#current-user-panel");
+  if (userPanel) userPanel.style.display = "block";
+
+  const box = document.querySelector("#current-user");
+  if (box) {
+    box.className = "status-box logged-in";
+    box.textContent = [
+      `Ime: ${getUserDisplayName(user)}`,
+      `Email: ${user.email}`,
+      `Rola: ${user.role}`,
+      `ID: ${user.user_id ?? "n/a"}`,
+    ].join("\n");
+  }
+
+  // Pokaži admin panel samo adminu
+  const adminSection = document.querySelector("#admin");
+  if (adminSection) adminSection.style.display = isAdmin(user) ? "block" : "none";
 }
 
 function renderLoggedOut() {
-  if (currentUserBox) {
-    currentUserBox.textContent = "Niste prijavljeni.";
-    currentUserBox.classList.remove("logged-in");
-  }
-
   if (navbarCurrentUser) {
     navbarCurrentUser.textContent = "Niste prijavljeni";
     navbarCurrentUser.classList.remove("logged-in");
   }
+
+  const badge = document.querySelector("#navbar-role-badge");
+  if (badge) badge.style.display = "none";
+
+  const logoutBtn = document.querySelector("#logout-button");
+  if (logoutBtn) logoutBtn.style.display = "none";
+
+  const userPanel = document.querySelector("#current-user-panel");
+  if (userPanel) userPanel.style.display = "none";
+
+  const adminSection = document.querySelector("#admin");
+  if (adminSection) adminSection.style.display = "none";
 }
 
-function renderLoggedIn(user) {
-  const displayName = getUserDisplayName(user);
-  const role = user.role ?? "unknown";
-
-  if (currentUserBox) {
-    currentUserBox.textContent = formatUser(user);
-    currentUserBox.classList.add("logged-in");
-  }
-
-  if (navbarCurrentUser) {
-    navbarCurrentUser.textContent = `Prijavljen: ${displayName} (${role})`;
-    navbarCurrentUser.classList.add("logged-in");
-  }
-}
-
-async function loadCurrentUser(options = {}) {
+async function loadCurrentUser(opts = {}) {
   const token = getToken();
-
-  if (!token) {
-    renderLoggedOut();
-    return null;
-  }
+  if (!token) { renderLoggedOut(); return null; }
 
   const tokenUser = userFromToken(token);
-  if (tokenUser) {
-    renderLoggedIn(tokenUser);
-  }
+  if (tokenUser) renderLoggedIn(tokenUser);
 
   try {
     const user = await apiFetch("/auth/me");
     renderLoggedIn(user);
     return user;
-  } catch (error) {
-    if (options.keepTokenFallback && tokenUser && error.status !== 401) {
-      setMessage(`GET /auth/me nije uspio, ali token postoji: ${error.message}`, "info");
-      return tokenUser;
-    }
-
+  } catch (err) {
+    if (opts.keepTokenFallback && tokenUser && err.status !== 401) return tokenUser;
     clearToken();
     renderLoggedOut();
-    setMessage(`Sesija nije vazeca: ${error.message}`, "error");
     return null;
   }
 }
 
-function logoutUser() {
+// ============================================================
+// Health check
+// ============================================================
+
+document.querySelector("#health-button")?.addEventListener("click", async () => {
+  const bar = document.querySelector("#health-bar");
+  const pre = document.querySelector("#health-result");
+  if (!bar || !pre) return;
+  const visible = bar.style.display !== "none";
+  if (visible) { bar.style.display = "none"; return; }
+  pre.textContent = "Učitavanje…";
+  bar.style.display = "block";
+  try {
+    const data = await apiFetch("/health");
+    pre.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    pre.textContent = `Greška: ${err.message}`;
+  }
+});
+
+// ============================================================
+// Register
+// ============================================================
+
+document.querySelector("#register-submit")?.addEventListener("click", async (event) => {
+  event.preventDefault();
+  const form = document.querySelector("#register-form");
+  const btn = document.querySelector("#register-submit");
+  clearMessage("register-message");
+  try {
+    const first_name = validateFormField(form, "first_name", "Ime");
+    const last_name = validateFormField(form, "last_name", "Prezime");
+    const email = validateFormField(form, "email", "Email").toLowerCase();
+    const password = validateFormField(form, "password", "Lozinka");
+    setButtonLoading(btn, true, "Registriram…");
+    const user = await apiFetch("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ first_name, last_name, email, password }),
+    });
+    form.reset();
+    setMessage("register-message", `✔ Registrirani ste kao ${user.email}. Sada se prijavite.`, "ok");
+  } catch (err) {
+    setMessage("register-message", `✖ ${err.message}`, "error");
+  } finally {
+    setButtonLoading(btn, false);
+  }
+});
+
+// ============================================================
+// Login
+// ============================================================
+
+document.querySelector("#login-submit")?.addEventListener("click", async (event) => {
+  event.preventDefault();
+  const form = document.querySelector("#login-form");
+  const btn = document.querySelector("#login-submit");
+  clearMessage("auth-message");
+  try {
+    const email = validateFormField(form, "email", "Email").toLowerCase();
+    const password = validateFormField(form, "password", "Lozinka");
+    const body = new URLSearchParams();
+    body.set("username", email);
+    body.set("password", password);
+    setButtonLoading(btn, true, "Prijavljivanje…");
+    const data = await apiFormFetch("/auth/login", body);
+    setToken(data.access_token);
+    form.reset();
+    const user = userFromToken(data.access_token);
+    if (user) renderLoggedIn(user);
+    setMessage("auth-message", "✔ Prijava uspješna.", "ok");
+    await loadCurrentUser({ keepTokenFallback: true });
+    await ucitajTermine();
+    await ucitajMojePrijave();
+  } catch (err) {
+    setMessage("auth-message", `✖ ${err.message}`, "error");
+  } finally {
+    setButtonLoading(btn, false);
+  }
+});
+
+// ============================================================
+// Logout
+// ============================================================
+
+document.querySelector("#logout-button")?.addEventListener("click", () => {
   clearToken();
   renderLoggedOut();
-  setMessage("Odjavljeni ste.", "ok");
+  document.querySelector("#termini-lista").innerHTML = "";
+  document.querySelector("#termini-empty").style.display = "none";
+  document.querySelector("#prijave-lista").innerHTML = "";
+  document.querySelector("#prijave-empty").style.display = "none";
+});
+
+// ============================================================
+// Osoba 4 – Termini s prijavom/odjavom i progress barom
+// ============================================================
+
+function renderProgressBar(registrirani, kapacitet) {
+  const pct = kapacitet > 0 ? Math.min(100, Math.round((registrirani / kapacitet) * 100)) : 0;
+  const cls = pct >= 100 ? "full" : pct >= 75 ? "warn" : "";
+  const badgeCls = pct >= 100 ? "full" : pct >= 75 ? "warn" : "";
+  const badgeText = pct >= 100 ? "🔴 POPUNJENO" : `${registrirani}/${kapacitet} mjesta`;
+  return `
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Popunjenost</span>
+        <span class="capacity-badge ${badgeCls}">${badgeText}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill ${cls}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
 }
 
-async function loadTermsPreview() {
-  if (!termsResult) {
-    return;
-  }
+async function ucitajTermine() {
+  const lista = document.querySelector("#termini-lista");
+  const emptyEl = document.querySelector("#termini-empty");
+  if (!lista) return;
 
-  termsResult.textContent = "Ucitavanje termina...";
+  lista.innerHTML = "<p class='muted'>Učitavanje termina…</p>";
+  if (emptyEl) emptyEl.style.display = "none";
 
   try {
-    const terms = await apiFetch("/termini");
-    termsResult.textContent = JSON.stringify(terms, null, 2);
-  } catch (error) {
-    termsResult.textContent = `Termini nisu dostupni: ${error.message}`;
+    const termini = await apiFetch("/termini");
+
+    if (!termini.length) {
+      lista.innerHTML = "";
+      if (emptyEl) emptyEl.style.display = "block";
+      return;
+    }
+
+    let mojaPrijavaIds = new Set();
+    try {
+      const moje = await apiFetch("/me/prijave");
+      mojaPrijavaIds = new Set(moje.map((p) => p.termin?.term_id));
+    } catch (_) {}
+
+    lista.innerHTML = "";
+
+    for (const termin of termini) {
+      const prijavljen = mojaPrijavaIds.has(termin.term_id);
+
+      let progressHTML = "";
+      let popunjen = false;
+      try {
+        const pop = await apiFetch(`/termini/${termin.term_id}/popunjenost`);
+        popunjen = pop.full;
+        progressHTML = renderProgressBar(pop.registered_students, pop.capacity);
+      } catch (_) {
+        progressHTML = `<p class="muted" style="font-size:0.8125rem">Kapacitet nije dostupan</p>`;
+      }
+
+      const card = document.createElement("div");
+      card.className = `termin-card${popunjen ? " full" : ""}`;
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">
+          <strong>Termin #${termin.term_id}</strong>
+          ${prijavljen ? '<span class="capacity-badge" style="background:#dcfce7;color:#16a34a">✔ Prijavljen</span>' : ""}
+        </div>
+        <p class="termin-meta">👤 Profesor ID: ${termin.professor_id} &nbsp;|&nbsp; 📚 Predmet ID: ${termin.subject_id}</p>
+        <p class="termin-meta">🕐 ${formatDateTime(termin.start_time)} – ${formatDateTime(termin.end_time)}</p>
+        ${progressHTML}
+        <div class="termin-actions">
+          <button
+            class="prijava-btn btn-${prijavljen ? "danger" : "primary"}"
+            data-id="${termin.term_id}"
+            data-prijavljen="${prijavljen}"
+            ${!prijavljen && popunjen ? "disabled title='Termin je popunjen'" : ""}
+          >${prijavljen ? "❌ Odjavi se" : "✔ Prijavi se"}</button>
+          <span class="prijava-status"></span>
+        </div>`;
+      lista.appendChild(card);
+    }
+
+    lista.querySelectorAll(".prijava-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const termId = Number(btn.dataset.id);
+        const prijavljen = btn.dataset.prijavljen === "true";
+        const statusEl = btn.nextElementSibling;
+        setButtonLoading(btn, true, "…");
+        statusEl.textContent = "";
+        statusEl.className = "prijava-status";
+        try {
+          if (prijavljen) {
+            await apiFetch(`/termini/${termId}/prijava`, { method: "DELETE" });
+            statusEl.textContent = "✔ Odjavljeni ste.";
+          } else {
+            await apiFetch(`/termini/${termId}/prijava`, { method: "POST" });
+            statusEl.textContent = "✔ Prijavljeni ste!";
+          }
+          setButtonLoading(btn, false);
+          await ucitajTermine();
+          await ucitajMojePrijave();
+        } catch (err) {
+          statusEl.textContent = `✖ ${err.message}`;
+          statusEl.className = "prijava-status error";
+          setButtonLoading(btn, false);
+        }
+      });
+    });
+  } catch (err) {
+    lista.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><p>${err.message}</p></div>`;
   }
 }
 
-function setupAuthUi() {
-  if (scriptStatus) {
-    scriptStatus.textContent = "Frontend script je ucitan. Forme se ne salju kao GET query string.";
-    scriptStatus.dataset.type = "ok";
+// ============================================================
+// Osoba 4 – Moje prijave
+// ============================================================
+
+async function ucitajMojePrijave() {
+  const lista = document.querySelector("#prijave-lista");
+  const emptyEl = document.querySelector("#prijave-empty");
+  if (!lista) return;
+
+  lista.innerHTML = "<p class='muted'>Učitavanje…</p>";
+  if (emptyEl) emptyEl.style.display = "none";
+
+  try {
+    const prijave = await apiFetch("/me/prijave");
+
+    if (!prijave.length) {
+      lista.innerHTML = "";
+      if (emptyEl) emptyEl.style.display = "block";
+      return;
+    }
+
+    lista.innerHTML = "";
+    prijave.forEach((p) => {
+      const t = p.termin;
+      const row = document.createElement("div");
+      row.className = "prijava-row";
+      row.innerHTML = t
+        ? `<div>
+            <strong>Termin #${t.term_id}</strong>
+            <p class="termin-meta">🕐 ${formatDateTime(t.start_time)} – ${formatDateTime(t.end_time)}</p>
+            <p class="termin-meta">Prijavljen: ${formatDateTime(p.registered_at)}</p>
+           </div>
+           <button class="btn-danger odjava-btn" data-id="${t.term_id}">Odjavi se</button>`
+        : `<span class="muted">Termin je obrisan (ID: ${p.registration_id})</span>`;
+      lista.appendChild(row);
+    });
+
+    lista.querySelectorAll(".odjava-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const termId = Number(btn.dataset.id);
+        setButtonLoading(btn, true, "…");
+        try {
+          await apiFetch(`/termini/${termId}/prijava`, { method: "DELETE" });
+          await ucitajMojePrijave();
+          await ucitajTermine();
+        } catch (err) {
+          btn.textContent = `✖ ${err.message}`;
+          btn.disabled = false;
+        }
+      });
+    });
+  } catch (err) {
+    lista.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><p>${err.message}</p></div>`;
   }
-
-  healthButton?.addEventListener("click", testHealth);
-  refreshUserButton?.addEventListener("click", () => loadCurrentUser());
-  registerForm?.addEventListener("submit", registerUser);
-  registerSubmitButton?.addEventListener("click", registerUser);
-  loginForm?.addEventListener("submit", loginUser);
-  loginSubmitButton?.addEventListener("click", loginUser);
-  logoutButton?.addEventListener("click", logoutUser);
-  loadTermsButton?.addEventListener("click", loadTermsPreview);
-
-  loadCurrentUser();
 }
 
-setupAuthUi();
+// ============================================================
+// Event listeneri
+// ============================================================
 
-// Privremeno izlozeno za lakse testiranje iz browser konzole.
-window.appApi = {
-  apiFetch,
-  clearToken,
-  getToken,
-  loadCurrentUser,
-  setToken,
-};
+document.querySelector("#load-terms-button")?.addEventListener("click", ucitajTermine);
+document.querySelector("#load-prijave-btn")?.addEventListener("click", ucitajMojePrijave);
+
+// ============================================================
+// Init
+// ============================================================
+
+loadCurrentUser().then((user) => {
+  if (user) {
+    ucitajTermine();
+    ucitajMojePrijave();
+  }
+});
+
+window.appApi = { apiFetch, getToken, setToken, clearToken, ucitajTermine, ucitajMojePrijave };
