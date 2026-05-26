@@ -411,7 +411,7 @@ function renderAdminUI() {
         <button type="button" class="secondary-button" onclick="ucitajKorisnike()">↺ Osvježi</button>
       </div>
       <div id="admin-korisnici-lista">Učitavanje...</div>
-    </div>
+    </div>`;
 
   ucitajAdminTermine();
   ucitajKorisnike();
@@ -507,11 +507,14 @@ function renderTerminCard(term) {
     ? `<button type="button" class="secondary-button" onclick="odjaviSeSTermina(${termId})">Odjavi se</button>`
     : `<button type="button" ${full ? "disabled" : ""} onclick="prijaviSeNaTermin(${termId})">${full ? "Puno" : "Prijavi se"}</button>`;
 
+  const cardClass = `termin-card ${isReg ? "is-registered" : ""}`.trim();
+  const registeredBadge = isReg ? "<span class='registered-badge'>Prijavljen/a</span>" : "";
+
   return `
-    <article class="termin-card ${isReg ? "is-registered" : ""}">
+    <article class="${cardClass}">
       <div class="termin-card-header">
         <h3>Termin #${termId}</h3>
-        ${isReg ? "<span class='registered-badge'>Prijavljen/a</span>" : ""}
+        ${registeredBadge}
       </div>
       <p class="muted">Prof. ID: <strong>${term.professor_id}</strong> · Predmet ID: <strong>${term.subject_id}</strong></p>
       <p>📅 ${fmtDateTime(term.start_time)}</p>
