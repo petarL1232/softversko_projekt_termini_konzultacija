@@ -29,7 +29,7 @@ Nakon toga, najjedostavniji način za pokretanje projekta je uz pomoć `docker c
 
 Aplikacija se zatim otvara na: 
 ```
-http://localhost:800
+http://localhost:8000
 ```
 
 ### Development
