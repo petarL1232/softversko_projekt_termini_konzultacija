@@ -185,7 +185,6 @@ def normalize_password_for_blocklist(password: str) -> set[str]:
     """
 
     lowered = password.strip().lower()
-
     leet_lowered = lowered.translate(LEET_TRANSLATION)
 
     alnum_only = "".join(char for char in lowered if char.isalnum())
@@ -260,6 +259,7 @@ def get_role_value(role: UserRole | str) -> str:
 
     if isinstance(role, UserRole):
         return role.value
+
     return role
 
 
@@ -313,12 +313,35 @@ def require_admin(
     return current_user
 
 
+def require_admin_or_professor(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Dopusta pristup adminu ili profesoru.
+
+    Ostavljeno zbog kompatibilnosti ako neki router ili test importira
+    ovu dependency funkciju iz auth.py.
+    """
+
+    role = get_role_value(current_user.role)
+
+    if role not in {UserRole.ADMIN.value, UserRole.PROFESSOR.value}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Samo admin ili profesor ima pristup ovoj akciji.",
+        )
+
+    return current_user
+
+
 @router.get("/users", response_model=list[UserRead])
 def list_users(
     session: Session = Depends(get_session),
     admin: User = Depends(require_admin),
 ) -> list[User]:
+    """Vraca listu korisnika za admin role management."""
+
     users = session.exec(select(User).order_by(User.user_id)).all()
+
     return list(users)
 
 
@@ -329,6 +352,15 @@ def update_user_role(
     session: Session = Depends(get_session),
     admin: User = Depends(require_admin),
 ) -> User:
+    """Admin mijenja rolu korisnika.
+
+    Pravila:
+    - samo admin smije mijenjati role
+    - admin ne moze sam sebi ukloniti admin rolu
+    - professor mora imati office_id
+    - student i admin nemaju ured/prostoriju
+    """
+
     user = session.get(User, user_id)
 
     if user is None:
@@ -351,6 +383,7 @@ def update_user_role(
             )
 
         office = session.get(Office, payload.office_id)
+
         if office is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -382,7 +415,7 @@ def register_user(
     """Registrira novog korisnika.
 
     Koraci:
-    1. Ocisti email.
+    1. Validira i normalizira email.
     2. Provjeri je li lozinka na listi cestih lozinki.
     3. Provjeri password policy za novu lozinku.
     4. Provjeri postoji li vec korisnik s tim emailom.
