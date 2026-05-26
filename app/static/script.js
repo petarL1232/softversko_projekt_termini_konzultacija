@@ -3,9 +3,10 @@
 // ============================================================
 
 const TOKEN_STORAGE_KEY = "access_token";
+const navbarCurrentUser = document.querySelector("#navbar-current-user");
 
 function getToken() { return localStorage.getItem(TOKEN_STORAGE_KEY); }
-function setToken(t) { localStorage.setItem(TOKEN_STORAGE_KEY, t); }
+function setToken(token) { localStorage.setItem(TOKEN_STORAGE_KEY, token); }
 function clearToken() { localStorage.removeItem(TOKEN_STORAGE_KEY); }
 
 async function apiFetch(path, options = {}) {
@@ -132,8 +133,9 @@ function renderRoleBadge(user) {
 
 function renderLoggedIn(user) {
   const name = getUserDisplayName(user);
-  const pill = document.querySelector("#navbar-current-user");
-  if (pill) { pill.textContent = name; pill.className = "user-pill logged-in"; }
+  if (navbarCurrentUser) {
+    navbarCurrentUser.textContent = name; navbarCurrentUser.className = "user-pill logged-in";
+  }
   renderRoleBadge(user);
 
   const logoutBtn = document.querySelector("#logout-button");
@@ -218,7 +220,8 @@ document.querySelector("#health-button")?.addEventListener("click", async () => 
 // Register
 // ============================================================
 
-document.querySelector("#register-submit")?.addEventListener("click", async () => {
+document.querySelector("#register-submit")?.addEventListener("click", async (event) => {
+  event.preventDefault();
   const form = document.querySelector("#register-form");
   const btn = document.querySelector("#register-submit");
   clearMessage("register-message");
@@ -245,7 +248,8 @@ document.querySelector("#register-submit")?.addEventListener("click", async () =
 // Login
 // ============================================================
 
-document.querySelector("#login-submit")?.addEventListener("click", async () => {
+document.querySelector("#login-submit")?.addEventListener("click", async (event) => {
+  event.preventDefault();
   const form = document.querySelector("#login-form");
   const btn = document.querySelector("#login-submit");
   clearMessage("auth-message");

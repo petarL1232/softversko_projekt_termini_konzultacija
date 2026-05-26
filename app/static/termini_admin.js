@@ -400,9 +400,21 @@ function renderAdminUI() {
       </div>
 
       <div id="admin-termini-lista">Učitavanje...</div>
-    </div>`;
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <h2>Upravljanje korisnicima</h2>
+          <p class="muted">Pregled korisnika i promjena rola.</p>
+        </div>
+        <button type="button" class="secondary-button" onclick="ucitajKorisnike()">↺ Osvježi</button>
+      </div>
+      <div id="admin-korisnici-lista">Učitavanje...</div>
+    </div>
 
   ucitajAdminTermine();
+  ucitajKorisnike();
 }
 
 function filtrirajTermine(termini) {
@@ -726,7 +738,33 @@ function prikaziAdminMsg(message, type) {
   setTimeout(() => { el.style.display = "none"; }, 4000);
 }
 
-window.loginOverlay = loginOverlay;
+async function ucitajKorisnike() {
+  const lista = document.querySelector("#admin-korisnici-lista");
+  if (!lista) return;
+  lista.innerHTML = "<p class='muted'>Učitavanje...</p>";
+  try {
+    const korisnici = await safeApiFetch("/auth/users");
+    if (!korisnici.length) { lista.innerHTML = "<p class='muted'>Nema korisnika.</p>"; return; }
+    lista.innerHTML = `
+      <table class="termini-table">
+        <thead><tr><th>ID</th><th>Ime</th><th>Email</th><th>Rola</th></tr></thead>
+        <tbody>
+          ${korisnici.map(u => `<tr>
+            <td>${u.user_id ?? u.id}</td>
+            <td>${u.first_name ?? ""} ${u.last_name ?? ""}</td>
+            <td>${u.email}</td>
+            <td>${u.role}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  } catch (error) {
+    lista.innerHTML = `<p class="message-error">Greška: ${error.message}</p>`;
+  }
+}
+
+window.ucitajKorisnike = ucitajKorisnike;
+
+
 window.registerOverlay = registerOverlay;
 window.prikaziRegisterOverlay = prikaziRegisterOverlay;
 window.prikaziLoginScreen = prikaziLoginScreen;
