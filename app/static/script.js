@@ -3,6 +3,29 @@
 // ============================================================
 
 const TOKEN_STORAGE_KEY = "access_token";
+const THEME_STORAGE_KEY = "theme";
+
+function getStoredTheme() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  const toggle = document.querySelector("#theme-toggle");
+  if (!toggle) return;
+  const isDark = theme === "dark";
+  toggle.textContent = isDark ? "☀️" : "🌙";
+  toggle.setAttribute("aria-label", isDark ? "Svijetla tema" : "Tamna tema");
+  toggle.title = isDark ? "Svijetla tema" : "Tamna tema";
+}
+
+function initTheme() {
+  applyTheme(getStoredTheme());
+}
+
 function getNavbarCurrentUserElement() {
   return document.querySelector("#navbar-current-user");
 }
@@ -230,6 +253,13 @@ window.logoutApp = logoutApp;
 // ============================================================
 // Health check
 // ============================================================
+
+document.querySelector("#theme-toggle")?.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  applyTheme(current === "dark" ? "light" : "dark");
+});
+
+initTheme();
 
 document.querySelector("#health-button")?.addEventListener("click", async () => {
   const bar = document.querySelector("#health-bar");

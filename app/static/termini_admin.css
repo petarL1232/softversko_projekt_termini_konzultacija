@@ -2,7 +2,8 @@
    Restored UI for consultation terms
    ============================================================ */
 
-:root {
+:root,
+[data-theme="light"] {
     --ta-bg: #f4f7fb;
     --ta-card: #ffffff;
     --ta-text: #172033;
@@ -15,6 +16,73 @@
     --ta-success: #16a34a;
     --ta-warning: #d97706;
     --ta-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    --ta-brand-mark-bg: #e0ecff;
+    --ta-header-sub: #dbeafe;
+    --ta-secondary-bg: #eef2ff;
+    --ta-secondary-text: #1e3a8a;
+    --ta-form-bg: #f8fbff;
+    --ta-input-bg: #ffffff;
+    --ta-input-disabled-bg: #eef2f7;
+    --ta-input-disabled-text: #98a2b3;
+    --ta-card-surface: #ffffff;
+    --ta-card-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    --ta-registered-bg: #f0fdf4;
+    --ta-progress-track: #e5e7eb;
+    --ta-table-head-bg: #f8fafc;
+    --ta-table-head-text: #334155;
+    --ta-empty-bg: #f8fafc;
+    --ta-msg-bg: #eef2ff;
+    --ta-msg-text: #1e3a8a;
+    --ta-status-ok-bg: #dcfce7;
+    --ta-status-ok-text: #166534;
+    --ta-status-danger-bg: #fee2e2;
+    --ta-status-danger-text: #991b1b;
+    --ta-role-admin-bg: #dbeafe;
+    --ta-role-admin-text: #1d4ed8;
+    --ta-role-prof-bg: #fef3c7;
+    --ta-role-prof-text: #92400e;
+    --ta-registrations-border: #bbf7d0;
+}
+
+[data-theme="dark"] {
+    --ta-bg: #0c1117;
+    --ta-card: #151d2b;
+    --ta-text: #e8edf5;
+    --ta-muted: #8b9cb3;
+    --ta-border: #2a3548;
+    --ta-primary: #5b8cff;
+    --ta-primary-dark: #3d6ef5;
+    --ta-danger: #f87171;
+    --ta-danger-dark: #ef4444;
+    --ta-success: #4ade80;
+    --ta-warning: #fbbf24;
+    --ta-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+    --ta-brand-mark-bg: rgba(91, 140, 255, 0.2);
+    --ta-header-sub: #c7d9ff;
+    --ta-secondary-bg: rgba(91, 140, 255, 0.14);
+    --ta-secondary-text: #a8c0ff;
+    --ta-form-bg: #121a28;
+    --ta-input-bg: #1c2638;
+    --ta-input-disabled-bg: #1a2230;
+    --ta-input-disabled-text: #6b7a90;
+    --ta-card-surface: #1a2332;
+    --ta-card-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    --ta-registered-bg: rgba(74, 222, 128, 0.1);
+    --ta-progress-track: #2a3548;
+    --ta-table-head-bg: #1a2332;
+    --ta-table-head-text: #b6c2d6;
+    --ta-empty-bg: #121a28;
+    --ta-msg-bg: rgba(91, 140, 255, 0.14);
+    --ta-msg-text: #a8c0ff;
+    --ta-status-ok-bg: rgba(74, 222, 128, 0.15);
+    --ta-status-ok-text: #86efac;
+    --ta-status-danger-bg: rgba(248, 113, 113, 0.15);
+    --ta-status-danger-text: #fca5a5;
+    --ta-role-admin-bg: rgba(91, 140, 255, 0.2);
+    --ta-role-admin-text: #93b4ff;
+    --ta-role-prof-bg: rgba(251, 191, 36, 0.15);
+    --ta-role-prof-text: #fcd34d;
+    --ta-registrations-border: rgba(74, 222, 128, 0.35);
 }
 
 body {
@@ -46,7 +114,7 @@ body {
     width: fit-content;
     padding: 6px 12px;
     border-radius: 999px;
-    background: #e0ecff;
+    background: var(--ta-brand-mark-bg);
     color: var(--ta-primary-dark);
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -74,7 +142,7 @@ body {
 
 .ta-header p {
     margin: 0;
-    color: #dbeafe;
+    color: var(--ta-header-sub);
 }
 
 .panel {
@@ -135,8 +203,8 @@ body {
 }
 
 .secondary-button {
-    background: #eef2ff;
-    color: #1e3a8a;
+    background: var(--ta-secondary-bg);
+    color: var(--ta-secondary-text);
 }
 
 .danger-button {
@@ -164,7 +232,7 @@ body {
     padding: 18px;
     border: 1px dashed var(--ta-border);
     border-radius: 18px;
-    background: #f8fbff;
+    background: var(--ta-form-bg);
     margin-bottom: 18px;
 }
 
@@ -193,13 +261,13 @@ select {
     padding: 10px 12px;
     border: 1px solid var(--ta-border);
     border-radius: 12px;
-    background: white;
+    background: var(--ta-input-bg);
     color: var(--ta-text);
 }
 
 input:disabled {
-    background: #eef2f7;
-    color: #98a2b3;
+    background: var(--ta-input-disabled-bg);
+    color: var(--ta-input-disabled-text);
 }
 
 .check-row {
@@ -221,16 +289,16 @@ input:disabled {
 
 .termin-card,
 .mini-card {
-    background: white;
+    background: var(--ta-card-surface);
     border: 1px solid var(--ta-border);
     border-radius: 20px;
     padding: 18px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--ta-card-shadow);
 }
 
 .termin-card.is-registered {
     border-color: var(--ta-success);
-    background: #f0fdf4;
+    background: var(--ta-registered-bg);
 }
 
 .termin-card.is-full {
@@ -271,24 +339,24 @@ input:disabled {
 
 .status-pill.ok,
 .role-badge.student {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ta-status-ok-bg);
+    color: var(--ta-status-ok-text);
 }
 
 .status-pill.danger {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ta-status-danger-bg);
+    color: var(--ta-status-danger-text);
 }
 
 .role-badge.admin {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--ta-role-admin-bg);
+    color: var(--ta-role-admin-text);
 }
 
 .role-badge.professor,
 .role-badge.profesor {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--ta-role-prof-bg);
+    color: var(--ta-role-prof-text);
 }
 
 .occupancy-box {
@@ -299,7 +367,7 @@ input:disabled {
     height: 10px;
     border-radius: 999px;
     overflow: hidden;
-    background: #e5e7eb;
+    background: var(--ta-progress-track);
     margin-top: 8px;
 }
 
@@ -337,8 +405,8 @@ input:disabled {
 }
 
 .admin-table th {
-    background: #f8fafc;
-    color: #334155;
+    background: var(--ta-table-head-bg);
+    color: var(--ta-table-head-text);
     font-size: 0.88rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -349,7 +417,7 @@ input:disabled {
     border: 1px dashed var(--ta-border);
     border-radius: 16px;
     color: var(--ta-muted);
-    background: #f8fafc;
+    background: var(--ta-empty-bg);
 }
 
 .error-text {
@@ -360,31 +428,31 @@ input:disabled {
     padding: 12px 14px;
     border-radius: 14px;
     margin: 12px 0;
-    background: #eef2ff;
-    color: #1e3a8a;
+    background: var(--ta-msg-bg);
+    color: var(--ta-msg-text);
     font-weight: 700;
 }
 
 .msg-box[data-type="ok"] {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ta-status-ok-bg);
+    color: var(--ta-status-ok-text);
 }
 
 .msg-box[data-type="error"] {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ta-status-danger-bg);
+    color: var(--ta-status-danger-text);
 }
 
 .demo-box {
     margin-top: 18px;
     padding: 12px;
     border-radius: 14px;
-    background: #f8fafc;
+    background: var(--ta-empty-bg);
     color: var(--ta-muted);
 }
 
 .my-registrations-box {
-    border-color: #bbf7d0;
+    border-color: var(--ta-registrations-border);
 }
 
 @media (max-width: 760px) {

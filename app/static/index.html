@@ -6,6 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store" />
   <title>Termini konzultacija</title>
+  <script>
+    (function () {
+      var key = "theme";
+      var theme = localStorage.getItem(key);
+      if (theme !== "dark" && theme !== "light") {
+        theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
   <link rel="stylesheet" href="/static/style.css?v=osoba2" />
   <link rel="stylesheet" href="/static/termini_admin.css?v=osoba3" />
   <script defer src="/static/script.js?v=osoba2"></script>
@@ -27,6 +37,7 @@
     <div class="navbar-user">
       <span id="navbar-role-badge" class="role-badge" style="display:none"></span>
       <span id="navbar-current-user" class="user-pill">Niste prijavljeni</span>
+      <button id="theme-toggle" type="button" class="btn-theme" aria-label="Tamna tema" title="Tamna tema">🌙</button>
       <button id="logout-button" type="button" class="btn-logout" style="display:none">Odjava</button>
     </div>
   </header>
