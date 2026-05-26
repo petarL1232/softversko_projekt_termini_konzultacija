@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import create_db_and_tables, create_default_admin
 from app.models import HealthResponse
-from app.routers import auth, prijave, termini
+from app.routers import auth, catalog, prijave, termini
 from app.seed import seed_mathos_full_data
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -27,6 +27,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.include_router(auth.router)
+app.include_router(catalog.router)
 app.include_router(termini.router)
 app.include_router(prijave.router)
 
