@@ -1,5 +1,16 @@
 # Semestralni projekt - stranica za upravljanje terminima za labaratorij
 
+### Stack:
+- Python 3.11+
+- FastAPI + Uvicorn
+- PostgreSQL
+- SQLModel
+- pytest
+- ruff + black
+- Docker / docker-compose
+- bcrypt za password hashing
+- minimalni HTML/CSS/JS UI
+
 # Skok na sekcije
 
 - [Docker](#pokretanje-s-dockerom)
