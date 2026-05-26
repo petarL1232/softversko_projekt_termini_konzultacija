@@ -11,9 +11,27 @@ from app.models import (
     TermRegistration,
     User,
 )
-from app.routers.auth import get_current_user, require_admin, require_admin_or_professor
+from app.routers.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/termini", tags=["termini"])
+
+# ---------------------------------------------------------------------------
+# Local dependency — allows admin or professor to manage terms
+# ---------------------------------------------------------------------------
+
+
+def require_admin_or_professor(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Dopusta pristup adminu ili profesoru."""
+    role = str(current_user.role).lower()
+    if role not in {"admin", "professor", "profesor"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Samo admin ili profesor ima pristup ovoj akciji.",
+        )
+    return current_user
+
 
 
 # ---------------------------------------------------------------------------
