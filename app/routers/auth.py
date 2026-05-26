@@ -34,8 +34,7 @@ def normalize_email(email: str) -> str:
 
 
 EMAIL_PATTERN = re.compile(
-    r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
-    r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$"
+    r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@" r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$"
 )
 
 
@@ -319,8 +318,7 @@ def require_admin_or_professor(
 ) -> User:
     """Dopusta pristup adminu ili profesoru.
 
-    Ostavljeno zbog kompatibilnosti ako neki router ili test importira
-    ovu dependency funkciju iz auth.py.
+    Ostavljeno radi kompatibilnosti ako neki router/test importira ovaj helper.
     """
 
     role = get_role_value(current_user.role)
