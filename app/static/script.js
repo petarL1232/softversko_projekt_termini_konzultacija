@@ -3,7 +3,9 @@
 // ============================================================
 
 const TOKEN_STORAGE_KEY = "access_token";
-const navbarCurrentUser = document.querySelector("#navbar-current-user");
+function getNavbarCurrentUserElement() {
+  return document.querySelector("#navbar-current-user");
+}
 
 function getToken() { return localStorage.getItem(TOKEN_STORAGE_KEY); }
 function setToken(token) { localStorage.setItem(TOKEN_STORAGE_KEY, token); }
@@ -110,11 +112,12 @@ function getUserDisplayName(user) {
 }
 
 function isAdmin(user) {
-  return user?.role === "admin";
+  return String(user?.role || "").toLowerCase() === "admin";
 }
 
 function isProfessor(user) {
-  return user?.role === "professor" || user?.role === "profesor";
+  const role = String(user?.role || "").toLowerCase();
+  return role === "professor" || role === "profesor";
 }
 
 // ============================================================
@@ -133,6 +136,7 @@ function renderRoleBadge(user) {
 
 function renderLoggedIn(user) {
   const name = getUserDisplayName(user);
+  const navbarCurrentUser = getNavbarCurrentUserElement();
   if (navbarCurrentUser) {
     navbarCurrentUser.textContent = name;
     navbarCurrentUser.classList.add("logged-in");
@@ -162,6 +166,7 @@ function renderLoggedIn(user) {
 }
 
 function renderLoggedOut() {
+  const navbarCurrentUser = getNavbarCurrentUserElement();
   if (navbarCurrentUser) {
     navbarCurrentUser.textContent = "Niste prijavljeni";
     navbarCurrentUser.classList.remove("logged-in");
@@ -199,6 +204,29 @@ async function loadCurrentUser(opts = {}) {
   }
 }
 
+function logoutApp() {
+  clearToken();
+  renderLoggedOut();
+
+  const termsList = document.querySelector("#termini-lista");
+  const termsEmpty = document.querySelector("#termini-empty");
+  const prijaveList = document.querySelector("#prijave-lista");
+  const prijaveEmpty = document.querySelector("#prijave-empty");
+
+  if (termsList) termsList.innerHTML = "";
+  if (termsEmpty) termsEmpty.style.display = "none";
+  if (prijaveList) prijaveList.innerHTML = "";
+  if (prijaveEmpty) prijaveEmpty.style.display = "none";
+
+  if (typeof window.renderLoginUI === "function") {
+    window.renderLoginUI();
+  } else {
+    const main = document.querySelector("main");
+    if (main) main.innerHTML = "";
+  }
+}
+
+window.logoutApp = logoutApp;
 // ============================================================
 // Health check
 // ============================================================
@@ -283,13 +311,12 @@ document.querySelector("#login-submit")?.addEventListener("click", async (event)
 // Logout
 // ============================================================
 
-document.querySelector("#logout-button")?.addEventListener("click", () => {
-  clearToken();
-  renderLoggedOut();
-  document.querySelector("#termini-lista").innerHTML = "";
-  document.querySelector("#termini-empty").style.display = "none";
-  document.querySelector("#prijave-lista").innerHTML = "";
-  document.querySelector("#prijave-empty").style.display = "none";
+document.addEventListener("click", (event) => {
+  const logoutButton = event.target.closest?.("#logout-button");
+  if (!logoutButton) return;
+
+  event.preventDefault();
+  logoutApp();
 });
 
 // ============================================================
