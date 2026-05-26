@@ -10,8 +10,10 @@ let editingTerminId = null;
 
 let profesoriData = [];
 let predmetiData = [];
+let officesData = [];
 let profesorMap = new Map();
 let predmetMap = new Map();
+let officeMap = new Map();
 
 let filterProfesor = "";
 let filterPredmet = "";
@@ -21,6 +23,7 @@ let searchQuery = "";
 
 // Kept for static tests and for clear feature traceability.
 const FZ14_NOTE = "FZ-14 Admin dropdowns: profesor i predmet se biraju po imenu, ne po ID-u.";
+const OFFICE_UI_NOTE = "Office dropdown: u UI-ju se prikazuje naziv ureda, a backend i dalje dobiva office_id.";
 
 document.addEventListener("DOMContentLoaded", async () => {
     await initApp();
@@ -143,16 +146,19 @@ function renderUserHeader(roleLabel) {
 
 async function loadCatalog() {
     try {
-        const [professors, subjects] = await Promise.all([
+        const [professors, subjects, offices] = await Promise.all([
             safeApiFetch("/catalog/professors"),
             safeApiFetch("/catalog/subjects"),
+            safeApiFetch("/catalog/offices"),
         ]);
 
         profesoriData = Array.isArray(professors) ? professors : [];
         predmetiData = Array.isArray(subjects) ? subjects : [];
+        officesData = Array.isArray(offices) ? offices : [];
     } catch {
         profesoriData = [];
         predmetiData = [];
+        officesData = [];
     }
 
     profesorMap = new Map(
@@ -160,6 +166,9 @@ async function loadCatalog() {
     );
     predmetMap = new Map(
         predmetiData.map((subject) => [Number(subject.subject_id), subject]),
+    );
+    officeMap = new Map(
+        officesData.map((office) => [Number(office.office_id), office]),
     );
 }
 
@@ -170,10 +179,30 @@ function professorName(professorId) {
     return userDisplayName(professor);
 }
 
+function professorOffice(professorId) {
+    const professor = profesorMap.get(Number(professorId));
+    if (!professor) return null;
+
+    if (professor.office_name) {
+        return professor.office_name;
+    }
+
+    const office = officeMap.get(Number(professor.office_id));
+    return office?.office_name ?? null;
+}
+
+function officeName(officeId) {
+    const office = officeMap.get(Number(officeId));
+    if (!office) return officeId ? `Ured ${officeId}` : "Nije dodijeljeno";
+
+    return office.office_name;
+}
+
 function professorLabel(professor) {
     const name = userDisplayName(professor);
-    const email = professor?.email ? ` — ${professor.email}` : "";
-    return `${name}${email}`;
+    const office = professor?.office_name || officeName(professor?.office_id);
+    const officeText = office && office !== "Nije dodijeljeno" ? ` — ${office}` : "";
+    return `${name}${officeText}`;
 }
 
 function subjectName(subjectId) {
@@ -217,6 +246,24 @@ function renderSubjectOptions(selectedId = "") {
             return `<option value="${escapeHtml(id)}" ${isSelected}>${escapeHtml(
                 subject.name,
             )}</option>`;
+        }),
+    ].join("");
+}
+
+function renderOfficeOptions(selectedId = "") {
+    const selected = String(selectedId || "");
+
+    if (!officesData.length) {
+        return `<option value="">Nema ureda u katalogu</option>`;
+    }
+
+    return [
+        `<option value="">Odaberi ured/prostoriju</option>`,
+        ...officesData.map((office) => {
+            const id = String(office.office_id);
+            const isSelected = id === selected ? "selected" : "";
+            const label = `${office.office_name} — kapacitet ${office.capacity}`;
+            return `<option value="${escapeHtml(id)}" ${isSelected}>${escapeHtml(label)}</option>`;
         }),
     ].join("");
 }
@@ -816,6 +863,7 @@ function renderTerminCard(term) {
         occ && Number(occ.capacity) > 0
             ? Math.min(100, Math.round((occ.registered_students / occ.capacity) * 100))
             : 0;
+    const office = professorOffice(term.professor_id) || "Lokacija nije navedena";
 
     const actionButton = isRegistered
         ? `<button class="danger-button" onclick="odjaviSeSTermina(${termId})">Odjavi se</button>`
@@ -834,6 +882,7 @@ function renderTerminCard(term) {
             <div class="term-meta">
                 <span>Profesor: <strong>${escapeHtml(professorName(term.professor_id))}</strong></span>
                 <span>Kolegij: <strong>${escapeHtml(subjectName(term.subject_id))}</strong></span>
+                <span>Lokacija: <strong>${escapeHtml(office)}</strong></span>
             </div>
 
             <div class="term-time">
@@ -930,6 +979,7 @@ function renderMojePrijave() {
                 <article class="mini-card">
                     <h3>${escapeHtml(subjectName(term?.subject_id))}</h3>
                     <p>${escapeHtml(professorName(term?.professor_id))}</p>
+                    <p>Lokacija: ${escapeHtml(professorOffice(term?.professor_id) || "Nije navedeno")}</p>
                     <p>${escapeHtml(fmtDateTime(term?.start_time))} — ${escapeHtml(fmtDateTime(term?.end_time))}</p>
                     <button class="danger-button" onclick="odjaviSeSTermina(${Number(termId)})">Odjavi se</button>
                 </article>
@@ -1002,9 +1052,9 @@ function renderAdminTabela(container) {
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Termin</th>
-                    <th>Profesor</th>
                     <th>Kolegij</th>
+                    <th>Profesor</th>
+                    <th>Lokacija</th>
                     <th>Početak</th>
                     <th>Kraj</th>
                     <th>Popunjenost</th>
@@ -1016,12 +1066,13 @@ function renderAdminTabela(container) {
                     .map((termin) => {
                         const termId = getTermId(termin);
                         const occ = termin._occ;
+                        const office = professorOffice(termin.professor_id) || "Nije navedeno";
 
                         return `
                             <tr>
                                 <td>${escapeHtml(subjectName(termin.subject_id))}</td>
                                 <td>${escapeHtml(professorName(termin.professor_id))}</td>
-                                <td>${escapeHtml(subjectName(termin.subject_id))}</td>
+                                <td>${escapeHtml(office)}</td>
                                 <td>${escapeHtml(fmtDateTime(termin.start_time))}</td>
                                 <td>${escapeHtml(fmtDateTime(termin.end_time))}</td>
                                 <td>${occ ? `${escapeHtml(occ.registered_students)}/${escapeHtml(occ.capacity)}` : "?"}</td>
@@ -1224,7 +1275,7 @@ async function ucitajKorisnike() {
                         <th>Email</th>
                         <th>Trenutna rola</th>
                         <th>Nova rola</th>
-                        <th>office_id</th>
+                        <th>Ured/prostorija</th>
                         <th>Akcija</th>
                     </tr>
                 </thead>
@@ -1256,14 +1307,12 @@ function renderKorisnikRow(user) {
                 </select>
             </td>
             <td>
-                <input
+                <select
                     id="office-input-${escapeHtml(userId)}"
-                    type="number"
-                    min="1"
-                    value="${escapeHtml(officeId)}"
-                    placeholder="office_id"
                     ${role === "professor" ? "" : "disabled"}
                 >
+                    ${renderOfficeOptions(officeId)}
+                </select>
             </td>
             <td>
                 <button class="primary-button small" onclick="spremiKorisnickuRolu(${Number(userId)})">
@@ -1304,7 +1353,7 @@ async function spremiKorisnickuRolu(userId) {
         const officeId = Number.parseInt(officeInput?.value, 10);
 
         if (!officeId) {
-            showMessage(msg, "Za rolu professor treba unijeti office_id.", "error");
+            showMessage(msg, "Za rolu professor treba odabrati ured/prostoriju.", "error");
             return;
         }
 
