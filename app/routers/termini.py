@@ -7,12 +7,31 @@ from app.models import (
     ConsultationTermCreate,
     ConsultationTermRead,
     OccupancyResponse,
+    Subject,
     TermRegistration,
     User,
 )
 from app.routers.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/termini", tags=["termini"])
+
+# ---------------------------------------------------------------------------
+# Local dependency — allows admin or professor to manage terms
+# ---------------------------------------------------------------------------
+
+
+def require_admin_or_professor(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Dopusta pristup adminu ili profesoru."""
+    role = str(current_user.role).lower()
+    if role not in {"admin", "professor", "profesor"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Samo admin ili profesor ima pristup ovoj akciji.",
+        )
+    return current_user
+
 
 
 # ---------------------------------------------------------------------------
@@ -22,10 +41,10 @@ router = APIRouter(prefix="/termini", tags=["termini"])
 
 def _get_office_capacity(session: Session, term: ConsultationTerm) -> int:
     """Dohvati kapacitet ureda profesora."""
+    from app.models import Office
+
     professor = session.get(User, term.professor_id)
     if professor and professor.office_id:
-        from app.models import Office
-
         office = session.get(Office, professor.office_id)
         if office:
             return office.capacity
@@ -109,24 +128,22 @@ def get_termin(
 
 
 @router.post(
-    "", response_model=ConsultationTermRead, status_code=status.HTTP_201_CREATED
+    "",
+    response_model=ConsultationTermRead,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_termin(
     payload: ConsultationTermCreate,
     session: Session = Depends(get_session),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin_or_professor),
 ) -> ConsultationTermRead:
     """Kreiraj novi termin. Samo admin ili profesor."""
-    # Provjeri postoji li profesor
     profesor = session.get(User, payload.professor_id)
     if profesor is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Profesor s ID-om {payload.professor_id} nije pronađen.",
         )
-
-    # Provjeri postoji li predmet
-    from app.models import Subject
 
     predmet = session.get(Subject, payload.subject_id)
     if predmet is None:
@@ -135,7 +152,6 @@ def create_termin(
             detail=f"Predmet s ID-om {payload.subject_id} nije pronađen.",
         )
 
-    # Provjeri da je start_time prije end_time
     if payload.start_time >= payload.end_time:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -159,7 +175,7 @@ def update_termin(
     termin_id: int,
     payload: ConsultationTermCreate,
     session: Session = Depends(get_session),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin_or_professor),
 ) -> ConsultationTermRead:
     """Uredi postojeći termin. Samo admin. Vraća 404 ako ne postoji."""
     termin = session.get(ConsultationTerm, termin_id)
@@ -200,7 +216,6 @@ def delete_termin(
             detail=f"Termin s ID-om {termin_id} nije pronađen.",
         )
 
-    # Briši registracije vezane za termin
     registracije = session.exec(
         select(TermRegistration).where(TermRegistration.term_id == termin_id)
     ).all()
