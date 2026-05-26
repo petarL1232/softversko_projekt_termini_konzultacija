@@ -1,126 +1,105 @@
+# Semestralni projekt - stranica za upravljanje terminima za labaratorij
+
+# Skok na sekcije
+
+- [Docker](#pokretanje-s-dockerom)
+- [Pregled web stranice](#pregled-web-stranice)
+  - [Student](#prijava-kao-student)
+  - [Administrator](#prijava-kao-administrator)
+- [API](#api) 
+- [Demo scenarij](#demo-scenarij)
 
 ## Pokretanje s Dockerom
 
-Najjednostavnije pokretanje cijelog projekta:
+Prije pokretanja projekta, potrebno je ispuniti `.env` datoteku. 
+Funkcionalan primjer postoji u `.env.example` datoteci.
 
-```bash
-docker compose up --build
+Nakon toga, najjedostavniji način za pokretanje projekta je uz pomoć `docker compose up --build -d`.
+
+Aplikacija se zatim otvara na: 
+```
+http://localhost:800
 ```
 
-Aplikacija se otvara na:
+### Development
 
-```txt
-http://localhost:8000
-```
+Testovi se lokano pokreću uz pomoć `pytest`. Na Github repozitoriju je također prisutan **Github Actions** koji automatski na svaki commit/push pokreće testove.
 
-Swagger dokumentacija:
+Za lint i formatiranje se koristi `ruff check .` i `black .`
 
-```txt
-http://localhost:8000/docs
-```
+# Pregled web stranice
 
-Health check:
+U ovom demo-u, moguće je prijaviti se kao student, kao admin ili registrirati vlastiti račun.
 
-```txt
-http://localhost:8000/health
-```
+## Prijava kao student
 
-## Lokalno pokretanje bez app containera
+Nakon prijave, moguće je vidjeti:
 
-Prvo pokreni samo PostgreSQL bazu:
+### Moje prijave
 
-```bash
-docker compose up -d db
-```
+Sekcija koja prikazuje termine na koje je korisnik trenutno prijavljen, zajedno uz datum i vrijeme termina. 
 
-Zatim napravi virtual environment:
+Ako korisnik ima prijavljene termine, ova sekcija omogućuje i brzu odjavu s tog termina.
 
-```bash
-python -m venv .venv
-```
+### Termini konzultacija
 
-Windows PowerShell:
+Sekcija koja prikazuje trenutno dostupne termine i omogućuje prijavu na termine.
 
-```powershell
-.\.venv\Scripts\activate
-```
+Pri vrhu je **pretraga termina** koja omogućuje pretragu preko **ID-a profesora** ili preko **ID-a predmeta**, uz još moguće filtre za samo slobodne termine ili samo korisnikove termine.
 
-Linux/macOS/Git Bash:
+Nakon pretrage, vidljive su kartice koje prikazuju naziv termina, ID profesora i predmeta, datum i vrijeme termina, popunjenost i gumb za prijavu/odjavu termina.
+Kartica, naravno, prikazuje i jeli korisnik prijavljen na taj termin ili ne.
 
-```bash
-source .venv/bin/activate
-```
+## Prijava kao administrator
 
-Instaliraj dependencyje:
+Ova demo stranica podržava i mogućnosti administratora nad terminima.
 
-```bash
-pip install -r requirements.txt
-```
+Pri vrhu stranice je vidljiva sekcija za health provjeru stranice i gumb za `Swagger` dokumentaciju API-a. Više o ovome u [API sekciji](#api). 
 
-Na Windows PowerShellu postavi database URL:
+Nakon toga je vidljivo da je korisnik prijavljen kao administrator, uz gumb za odjavu.
 
-```powershell
-$env:DATABASE_URL="postgresql+psycopg://termini:termini@localhost:5432/termini_db"
-$env:SECRET_KEY="dev-secret-key"
-```
+Zatim slijedi sekcija za **upravljanje terminima**.
 
-Pokreni FastAPI:
+Prvobitno, moguće je osviježiti dostupne termine i **kreirati novi termin**. Klikom na gumb novi termin otvara se unos za ID profesora i predmeta, početni i završni datum. Važno je spomenuti da za unos datuma se koristi drop-down kalendar.
 
-```bash
-uvicorn app.main:app --reload
-```
+Nakon eventualnog unosa novog termina, vidljivi su svi termini zajedno sa svim njihovim relevantnim podatcima, gdje je moguće **urediti** i **izbrisati** pojedini termin.
 
-## Testovi
+Na kraju se nalazi sekcija za upravljanje svim korisnicima na stranici. 
+Ovdje je moguće promijenizi office ID i ulogu svakog korisnika: student, profesor ili admin.
 
-Ako testove pokrećeš lokalno, neka PostgreSQL baza radi:
+# API
 
-```bash
-docker compose up -d db
-```
+Swagger dokumentacija je vidljiva na `http://localhost:8000/docs`.
 
-Zatim:
+## Trenutni endpoint-i:
 
-```bash
-pytest
-```
+### Auth:
 
-## Lint i format
-
-```bash
-ruff check .
-black --check .
-```
-
-Za automatsko formatiranje:
-
-```bash
-black .
-```
-
-## Trenutni skeleton endpointi
-
-System:
-
-- `GET /health`
-
-Auth:
-
+- `GET /auth/users`
+- `PATCH /auth/users/{user_id}/role`
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/me`
 
-Termini:
+### Termini:
 
 - `GET /termini`
-- `GET /termini/{termin_id}`
 - `POST /termini`
+- `GET /termini/popunjenost/{termin_id}`
+- `GET /termini/{termin_id}`
 - `PUT /termini/{termin_id}`
 - `DELETE /termini/{termin_id}`
 
-Prijave:
+### Prijave:
 
 - `POST /termini/{termin_id}/prijava`
 - `DELETE /termini/{termin_id}/prijava`
 - `GET /me/prijave`
 - `GET /termini/{termin_id}/popunjenost`
 
+### System:
+- `GET /health`
+
+# Demo scenarij
+
+TBD
