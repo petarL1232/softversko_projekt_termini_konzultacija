@@ -29,7 +29,7 @@ Nakon toga, najjedostavniji način za pokretanje projekta je uz pomoć `docker c
 
 Aplikacija se zatim otvara na: 
 ```
-http://localhost:800
+http://localhost:8000
 ```
 
 ### Development
@@ -111,6 +111,20 @@ Swagger dokumentacija je vidljiva na `http://localhost:8000/docs`.
 ### System:
 - [GET /health](http://localhost:8000/docs#/system/health_health_get)
 
-# Demo scenarij
+# Demo scenariji
 
-TBD
+### Student scenarij 1: Registracija i login
+
+Student se registrira -> JWT token se sprema u localStorage -> Prikazuje se stranica za studenta
+
+### Student scenarij 2: Pregled termina
+
+Student se prijavi -> Student vidi termine i sve potrebne detalje -> Mogućnost prijave/odjave na termin
+
+### Profesor scenarij 1: Stvaranje novih termina 
+
+Profesor se prijavi -> Profesor može napraviti novi termin
+
+### Admin scenarij 1: Upravljanje korisnicima
+
+Admin se prijavi -> Admin vidi listu korisnika -> Admin ima mogućnost promijeniti ulogu korisnika
