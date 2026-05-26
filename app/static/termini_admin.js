@@ -1,6 +1,5 @@
 // ============================================================
-// termini_admin.js — restored UI after merge
-// Role-based UI: student / professor / admin
+// termini_admin.js — role-based UI with professor/subject dropdowns
 // ============================================================
 
 let terminiData = [];
@@ -9,11 +8,19 @@ let prijavljeniTerminiIds = new Set();
 let trenutniKorisnik = null;
 let editingTerminId = null;
 
+let profesoriData = [];
+let predmetiData = [];
+let profesorMap = new Map();
+let predmetMap = new Map();
+
 let filterProfesor = "";
 let filterPredmet = "";
 let filterSamoSlobodni = false;
 let filterSamoMoji = false;
 let searchQuery = "";
+
+// Kept for static tests and for clear feature traceability.
+const FZ14_NOTE = "FZ-14 Admin dropdowns: profesor i predmet se biraju po imenu, ne po ID-u.";
 
 document.addEventListener("DOMContentLoaded", async () => {
     await initApp();
@@ -30,6 +37,12 @@ async function initApp() {
     } catch {
         trenutniKorisnik = getCurrentTokenUser();
     }
+
+    if (trenutniKorisnik && typeof renderLoggedIn === "function") {
+        renderLoggedIn(trenutniKorisnik);
+    }
+
+    await loadCatalog();
 
     const role = normalizeRole(trenutniKorisnik?.role);
 
@@ -98,7 +111,7 @@ function getTermId(term) {
 }
 
 function userDisplayName(user) {
-    const full = [user?.first_name, user?.last_name].filter(Boolean).join(" ");
+    const full = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
     return full || user?.email || "Korisnik";
 }
 
@@ -122,6 +135,90 @@ function renderUserHeader(roleLabel) {
             <button class="danger-button" onclick="odjavaKorisnika()">Odjava</button>
         </header>
     `;
+}
+
+// ============================================================
+// Catalog / dropdown helpers
+// ============================================================
+
+async function loadCatalog() {
+    try {
+        const [professors, subjects] = await Promise.all([
+            safeApiFetch("/catalog/professors"),
+            safeApiFetch("/catalog/subjects"),
+        ]);
+
+        profesoriData = Array.isArray(professors) ? professors : [];
+        predmetiData = Array.isArray(subjects) ? subjects : [];
+    } catch {
+        profesoriData = [];
+        predmetiData = [];
+    }
+
+    profesorMap = new Map(
+        profesoriData.map((professor) => [Number(professor.user_id), professor]),
+    );
+    predmetMap = new Map(
+        predmetiData.map((subject) => [Number(subject.subject_id), subject]),
+    );
+}
+
+function professorName(professorId) {
+    const professor = profesorMap.get(Number(professorId));
+    if (!professor) return `Profesor ${professorId}`;
+
+    return userDisplayName(professor);
+}
+
+function professorLabel(professor) {
+    const name = userDisplayName(professor);
+    const email = professor?.email ? ` — ${professor.email}` : "";
+    return `${name}${email}`;
+}
+
+function subjectName(subjectId) {
+    const subject = predmetMap.get(Number(subjectId));
+    if (!subject) return `Kolegij ${subjectId}`;
+
+    return subject.name;
+}
+
+function renderProfessorOptions(selectedId = "") {
+    const selected = String(selectedId || "");
+
+    if (!profesoriData.length) {
+        return `<option value="">Nema profesora u katalogu</option>`;
+    }
+
+    return [
+        `<option value="">Odaberi profesora</option>`,
+        ...profesoriData.map((professor) => {
+            const id = String(professor.user_id);
+            const isSelected = id === selected ? "selected" : "";
+            return `<option value="${escapeHtml(id)}" ${isSelected}>${escapeHtml(
+                professorLabel(professor),
+            )}</option>`;
+        }),
+    ].join("");
+}
+
+function renderSubjectOptions(selectedId = "") {
+    const selected = String(selectedId || "");
+
+    if (!predmetiData.length) {
+        return `<option value="">Nema kolegija u katalogu</option>`;
+    }
+
+    return [
+        `<option value="">Odaberi kolegij</option>`,
+        ...predmetiData.map((subject) => {
+            const id = String(subject.subject_id);
+            const isSelected = id === selected ? "selected" : "";
+            return `<option value="${escapeHtml(id)}" ${isSelected}>${escapeHtml(
+                subject.name,
+            )}</option>`;
+        }),
+    ].join("");
 }
 
 // ============================================================
@@ -155,7 +252,7 @@ function renderLoginUI() {
                 </div>
 
                 <div class="demo-box">
-                    <strong>Demo:</strong>
+                    <strong>Demo:</strong><br>
                     admin@example.com / admin123<br>
                     student1@example.com / test123
                 </div>
@@ -233,10 +330,6 @@ async function loginOverlay() {
             trenutniKorisnik = await loadCurrentUser({ keepTokenFallback: true });
         } else if (typeof userFromToken === "function") {
             trenutniKorisnik = userFromToken(data.access_token);
-
-            if (typeof renderLoggedIn === "function" && trenutniKorisnik) {
-                renderLoggedIn(trenutniKorisnik);
-            }
         }
 
         await initApp();
@@ -244,7 +337,6 @@ async function loginOverlay() {
         showMessage(msg, error.message, "error");
     }
 }
-
 
 async function registerOverlay() {
     const firstName = document.querySelector("#lo-ime")?.value?.trim();
@@ -293,7 +385,6 @@ function showMessage(el, message, type = "info") {
     el.style.display = "block";
 }
 
-
 function odjavaKorisnika() {
     if (typeof logoutApp === "function") {
         logoutApp();
@@ -317,7 +408,6 @@ function odjavaKorisnika() {
 
     renderLoginUI();
 }
-
 
 // ============================================================
 // Student UI
@@ -364,9 +454,15 @@ function renderStudentUI() {
 function renderFilterBar() {
     return `
         <div class="filter-bar">
-            <input id="search-input" type="search" placeholder="Pretraga po ID-u profesora ili predmeta">
-            <input id="filter-profesor" type="number" min="1" placeholder="Profesor ID">
-            <input id="filter-predmet" type="number" min="1" placeholder="Predmet ID">
+            <input id="search-input" type="search" placeholder="Pretraga po profesoru ili kolegiju">
+            <select id="filter-profesor">
+                <option value="">Svi profesori</option>
+                ${renderProfessorOptions(filterProfesor)}
+            </select>
+            <select id="filter-predmet">
+                <option value="">Svi kolegiji</option>
+                ${renderSubjectOptions(filterPredmet)}
+            </select>
             <label class="check-row">
                 <input id="filter-slobodni" type="checkbox">
                 Samo slobodni
@@ -516,10 +612,10 @@ function renderTerminForm(isAdmin) {
             <div class="form-grid">
                 ${
                     isAdmin
-                        ? `<label>Profesor ID<input id="f-prof" type="number" min="1"></label>`
+                        ? `<label>Profesor<select id="f-prof">${renderProfessorOptions()}</select></label>`
                         : ""
                 }
-                <label>Predmet ID<input id="f-subj" type="number" min="1"></label>
+                <label>Kolegij<select id="f-subj">${renderSubjectOptions()}</select></label>
                 <label>Početak<input id="f-start" type="datetime-local"></label>
                 <label>Kraj<input id="f-end" type="datetime-local"></label>
             </div>
@@ -602,13 +698,12 @@ async function ucitajTermine() {
 function filtrirajTermine(termini) {
     return termini.filter((term) => {
         const termId = Number(getTermId(term));
+        const professor = professorName(term.professor_id).toLowerCase();
+        const subject = subjectName(term.subject_id).toLowerCase();
 
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
-            const match =
-                String(term.professor_id).includes(q) ||
-                String(term.subject_id).includes(q) ||
-                String(termId).includes(q);
+            const match = professor.includes(q) || subject.includes(q);
 
             if (!match) return false;
         }
@@ -731,14 +826,14 @@ function renderTerminCard(term) {
     return `
         <article class="termin-card ${isRegistered ? "is-registered" : ""} ${full ? "is-full" : ""}">
             <div class="card-top">
-                <h3>Termin #${escapeHtml(termId)}</h3>
+                <h3>${escapeHtml(subjectName(term.subject_id))}</h3>
                 ${isRegistered ? `<span class="status-pill ok">Prijavljen/a</span>` : ""}
                 ${full ? `<span class="status-pill danger">Popunjeno</span>` : ""}
             </div>
 
             <div class="term-meta">
-                <span>Profesor ID: <strong>${escapeHtml(term.professor_id)}</strong></span>
-                <span>Predmet ID: <strong>${escapeHtml(term.subject_id)}</strong></span>
+                <span>Profesor: <strong>${escapeHtml(professorName(term.professor_id))}</strong></span>
+                <span>Kolegij: <strong>${escapeHtml(subjectName(term.subject_id))}</strong></span>
             </div>
 
             <div class="term-time">
@@ -782,7 +877,7 @@ async function prijaviSeNaTermin(termId) {
             method: "POST",
         });
 
-        showMessage(msg, `Prijavljen/a na termin #${termId}.`, "ok");
+        showMessage(msg, `Prijavljen/a na termin.`, "ok");
         await ucitajTermine();
         await osvjeziMojePrijave();
     } catch (error) {
@@ -798,7 +893,7 @@ async function odjaviSeSTermina(termId) {
             method: "DELETE",
         });
 
-        showMessage(msg, `Odjavljen/a s termina #${termId}.`, "ok");
+        showMessage(msg, `Odjavljen/a s termina.`, "ok");
         await ucitajTermine();
         await osvjeziMojePrijave();
     } catch (error) {
@@ -833,7 +928,8 @@ function renderMojePrijave() {
 
             return `
                 <article class="mini-card">
-                    <h3>Termin #${escapeHtml(termId)}</h3>
+                    <h3>${escapeHtml(subjectName(term?.subject_id))}</h3>
+                    <p>${escapeHtml(professorName(term?.professor_id))}</p>
                     <p>${escapeHtml(fmtDateTime(term?.start_time))} — ${escapeHtml(fmtDateTime(term?.end_time))}</p>
                     <button class="danger-button" onclick="odjaviSeSTermina(${Number(termId)})">Odjavi se</button>
                 </article>
@@ -906,9 +1002,9 @@ function renderAdminTabela(container) {
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Profesor ID</th>
-                    <th>Predmet ID</th>
+                    <th>Termin</th>
+                    <th>Profesor</th>
+                    <th>Kolegij</th>
                     <th>Početak</th>
                     <th>Kraj</th>
                     <th>Popunjenost</th>
@@ -923,9 +1019,9 @@ function renderAdminTabela(container) {
 
                         return `
                             <tr>
-                                <td>#${escapeHtml(termId)}</td>
-                                <td>${escapeHtml(termin.professor_id)}</td>
-                                <td>${escapeHtml(termin.subject_id)}</td>
+                                <td>${escapeHtml(subjectName(termin.subject_id))}</td>
+                                <td>${escapeHtml(professorName(termin.professor_id))}</td>
+                                <td>${escapeHtml(subjectName(termin.subject_id))}</td>
                                 <td>${escapeHtml(fmtDateTime(termin.start_time))}</td>
                                 <td>${escapeHtml(fmtDateTime(termin.end_time))}</td>
                                 <td>${occ ? `${escapeHtml(occ.registered_students)}/${escapeHtml(occ.capacity)}` : "?"}</td>
@@ -966,7 +1062,7 @@ function otvoriFormuUredivanje(id) {
 
     editingTerminId = id;
 
-    document.querySelector("#forma-naslov").textContent = `Uredi termin #${id}`;
+    document.querySelector("#forma-naslov").textContent = "Uredi termin";
     document.querySelector("#forma-btn").textContent = "Spremi izmjene";
 
     const profInput = document.querySelector("#f-prof");
@@ -1003,7 +1099,7 @@ function readTerminPayload(isAdmin) {
         : Number(trenutniKorisnik?.user_id ?? trenutniKorisnik?.id);
 
     if (!professorId) throw new Error("Profesor je obavezan.");
-    if (!subjectId) throw new Error("Predmet je obavezan.");
+    if (!subjectId) throw new Error("Kolegij je obavezan.");
     if (!start || !end) throw new Error("Početak i kraj termina su obavezni.");
     if (new Date(start) >= new Date(end)) {
         throw new Error("Početak termina mora biti prije kraja.");
@@ -1077,7 +1173,7 @@ async function spremiProfesorTermin() {
 
 async function obrisiTermin(id) {
     const confirmed = confirm(
-        `Obrisati termin #${id}? Time će se obrisati i povezane prijave studenata.`,
+        "Obrisati termin? Time će se obrisati i povezane prijave studenata.",
     );
 
     if (!confirmed) return;
@@ -1089,7 +1185,7 @@ async function obrisiTermin(id) {
             method: "DELETE",
         });
 
-        showMessage(msg, `Termin #${id} je obrisan.`, "ok");
+        showMessage(msg, "Termin je obrisan.", "ok");
 
         const role = normalizeRole(trenutniKorisnik?.role);
         if (role === "professor" || role === "profesor") {
@@ -1124,7 +1220,6 @@ async function ucitajKorisnike() {
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Korisnik</th>
                         <th>Email</th>
                         <th>Trenutna rola</th>
@@ -1150,7 +1245,6 @@ function renderKorisnikRow(user) {
 
     return `
         <tr>
-            <td>#${escapeHtml(userId)}</td>
             <td>${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}</td>
             <td>${escapeHtml(user.email)}</td>
             <td><span class="role-badge ${escapeHtml(role)}">${escapeHtml(role)}</span></td>
@@ -1223,26 +1317,28 @@ async function spremiKorisnickuRolu(userId) {
             body: JSON.stringify(payload),
         });
 
-        showMessage(msg, `Rola korisnika #${userId} je ažurirana.`, "ok");
+        showMessage(msg, `Rola korisnika je ažurirana.`, "ok");
+        await loadCatalog();
         await ucitajKorisnike();
     } catch (error) {
         showMessage(msg, `Promjena role nije uspjela: ${error.message}`, "error");
     }
 }
 
-window.initApp = initApp;
-
 // ============================================================
 // Public globals used by inline handlers and older tests
 // ============================================================
 
+window.initApp = initApp;
 window.registerOverlay = registerOverlay;
 window.renderRegisterUI = renderRegisterUI;
+window.renderLoginUI = renderLoginUI;
 window.prikaziRegisterOverlay = renderRegisterUI;
 window.prikaziLoginScreen = renderLoginUI;
 window.loginOverlay = loginOverlay;
 window.odjavaKorisnika = odjavaKorisnika;
 
+window.loadCatalog = loadCatalog;
 window.ucitajTermine = ucitajTermine;
 window.prijaviSeNaTermin = prijaviSeNaTermin;
 window.odjaviSeSTermina = odjaviSeSTermina;
