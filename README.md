@@ -75,30 +75,30 @@ Swagger dokumentacija je vidljiva na `http://localhost:8000/docs`.
 
 ### Auth:
 
-- `GET /auth/users`
-- `PATCH /auth/users/{user_id}/role`
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
+- [GET /auth/users](http://localhost:8000/docs#/auth/list_users_auth_users_get)
+- [PATCH /auth/users/{user_id}/role](http://localhost:8000/docs#/auth/update_user_role_auth_users__user_id__role_patch)
+- [POST /auth/register](http://localhost:8000/docs#/auth/register_user_auth_register_post)
+- [POST /auth/login](http://localhost:8000/docs#/auth/login_user_auth_login_post)
+- [GET /auth/me](http://localhost:8000/docs#/auth/read_me_auth_me_get)
 
 ### Termini:
 
-- `GET /termini`
-- `POST /termini`
-- `GET /termini/popunjenost/{termin_id}`
-- `GET /termini/{termin_id}`
-- `PUT /termini/{termin_id}`
-- `DELETE /termini/{termin_id}`
+- [GET /termini](http://localhost:8000/docs#/termini/list_termini_termini_get)
+- [POST /termini](http://localhost:8000/docs#/termini/create_termin_termini_post)
+- [GET /termini/popunjenost/{termin_id}](http://localhost:8000/docs#/termini/popunjenost_termina_termini_popunjenost__termin_id__get)
+- [GET /termini/{termin_id}](http://localhost:8000/docs#/termini/get_termin_termini__termin_id__get)
+- [PUT /termini/{termin_id}](http://localhost:8000/docs#/termini/update_termin_termini__termin_id__put)
+- [DELETE /termini/{termin_id}](http://localhost:8000/docs#/termini/delete_termin_termini__termin_id__delete)
 
 ### Prijave:
 
-- `POST /termini/{termin_id}/prijava`
-- `DELETE /termini/{termin_id}/prijava`
-- `GET /me/prijave`
-- `GET /termini/{termin_id}/popunjenost`
+- [POST /termini/{termin_id}/prijava](http://localhost:8000/docs#/termini/delete_termin_termini__termin_id__delete)
+- [DELETE /termini/{termin_id}/prijava](http://localhost:8000/docs#/prijave/odjavi_se_s_termina_termini__termin_id__prijava_delete)
+- [GET /me/prijave](http://localhost:8000/docs#/prijave/moje_prijave_me_prijave_get)
+- [GET /termini/{termin_id}/popunjenost](http://localhost:8000/docs#/prijave/popunjenost_termina_termini__termin_id__popunjenost_get)
 
 ### System:
-- `GET /health`
+- [GET /health](http://localhost:8000/docs#/system/health_health_get)
 
 # Demo scenarij
 
