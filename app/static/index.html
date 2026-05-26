@@ -1,105 +1,45 @@
 <!doctype html>
 <html lang="hr">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta http-equiv="Cache-Control" content="no-store"/>
-  <title>Termini konzultacija</title>
-  <link rel="stylesheet" href="/static/style.css"/>
-  <link rel="stylesheet" href="/static/termini_admin.css"/>
-  <script defer src="/static/script.js"></script>
-  <script defer src="/static/termini_admin.js"></script>
-</head>
-<body>
 
-  <!-- NAVBAR -->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>Termini konzultacija</title>
+  <link rel="stylesheet" href="/static/style.css?v=osoba2" />
+  <link rel="stylesheet" href="/static/termini_admin.css?v=osoba3" />
+  <script defer src="/static/script.js?v=osoba2"></script>
+  <script defer src="/static/termini_admin.js?v=osoba3"></script>
+</head>
+
+<body>
   <header class="navbar">
     <div class="navbar-brand">
-      <span class="brand-main">TERMINI</span>
-      <span class="brand-slash"> // </span>
-      <span class="brand-sub" id="navbar-role-label">konzultacija</span>
+      <span class="brand-icon">📅</span>
+      <strong>Termini konzultacija</strong>
     </div>
+
     <nav aria-label="Glavna navigacija">
-      <span id="navbar-current-user" class="user-pill">Niste prijavljeni</span>
-      <a href="#auth">Auth</a>
-      <a href="#terms">Termini</a>
-      <a href="#admin">Admin</a>
-      <a href="/docs" target="_blank" rel="noreferrer">Swagger</a>
-      <button id="logout-button" type="button" class="btn-logout" style="display:none">Odjava</button>
+      <a href="/docs" target="_blank" rel="noreferrer">Swagger ↗</a>
+      <button id="health-button" type="button" class="btn-nav">🔍 Health</button>
     </nav>
+
+    <div class="navbar-user">
+      <span id="navbar-role-badge" class="role-badge" style="display:none"></span>
+      <span id="navbar-current-user" class="user-pill">Niste prijavljeni</span>
+      <button id="logout-button" type="button" class="btn-logout" style="display:none">Odjava</button>
+    </div>
   </header>
 
+  <div id="health-bar" class="health-bar" style="display:none">
+    <pre id="health-result"></pre>
+  </div>
+
   <main class="container">
-
-    <!-- HERO -->
-    <section class="hero card">
-      <p class="eyebrow">FastAPI + PostgreSQL</p>
-      <h1>Termini konzultacija</h1>
-      <p class="muted">
-        Sustav za prijavu na termine konzultacija i laboratorija.
-        Prijavite se ili registrirajte kako biste pristupili terminima.
-      </p>
-      <div class="actions-row">
-        <button id="health-button" type="button" class="btn-secondary">Testiraj /health</button>
-        <button id="refresh-user-button" type="button" class="btn-secondary">Osvježi korisnika</button>
-      </div>
-      <pre id="health-result">Klikni gumb za provjeru API-ja.</pre>
-      <p id="script-status" class="script-status">Frontend script se učitava...</p>
-    </section>
-
-    <!-- AUTH -->
-    <section id="auth" class="grid two-columns">
-      <article class="card">
-        <h2>Register</h2>
-        <p class="muted">Registracija stvara studentski račun.</p>
-        <form id="register-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
-          <label for="register-first-name">Ime</label>
-          <input id="register-first-name" name="first_name" type="text" autocomplete="given-name" placeholder="Ime"/>
-          <label for="register-last-name">Prezime</label>
-          <input id="register-last-name" name="last_name" type="text" autocomplete="family-name" placeholder="Prezime"/>
-          <label for="register-email">Email</label>
-          <input id="register-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required/>
-          <label for="register-password">Lozinka</label>
-          <input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="min 6 znakova" minlength="6" required/>
-          <button id="register-submit" type="button">Registriraj se</button>
-        </form>
-      </article>
-
-      <article class="card">
-        <h2>Login</h2>
-        <p class="muted">Prijavite se svojim računom.</p>
-        <form id="login-form" class="form-stack" method="post" action="javascript:void(0)" onsubmit="return false;">
-          <label for="login-email">Email</label>
-          <input id="login-email" name="email" type="email" autocomplete="email" placeholder="student@unios.hr" required/>
-          <label for="login-password">Lozinka</label>
-          <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="lozinka" required/>
-          <button id="login-submit" type="button">Login</button>
-        </form>
-      </article>
-    </section>
-
-    <!-- TRENUTNI KORISNIK -->
-    <section class="card" id="current-user-panel">
-      <div class="section-header">
-        <div>
-          <h2>Trenutni korisnik</h2>
-          <p class="muted">Rezultat endpointa <code>GET /auth/me</code>.</p>
-        </div>
-      </div>
-      <div id="current-user" class="status-box">Niste prijavljeni.</div>
-      <div id="auth-message" class="message-box" role="status"></div>
-    </section>
-
-    <!-- TERMINI -->
-    <section id="terms" class="card">
-      <!-- Sadržaj renderira termini_admin.js -->
-    </section>
-
-    <!-- ADMIN -->
-    <section id="admin" class="card">
-      <!-- Sadržaj renderira termini_admin.js -->
-    </section>
-
+    <!-- termini_admin.js preuzima kontrolu i renderira UI ovisno o roli -->
   </main>
+
+  <p id="script-status" style="display:none"></p>
 </body>
+
 </html>
