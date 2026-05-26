@@ -420,52 +420,67 @@ async function spremiProfesorTermin() {
 
 // ── ADMIN UI ──────────────────────────────────────────────────
 function renderAdminUI() {
-  const main = document.querySelector("main");
-  if (!main) return;
+    const main = document.querySelector("main");
+    if (!main) return;
 
-  main.innerHTML = `
-    <div class="role-header">
-      <div>
-        <div class="role-badge role-admin">Admin</div>
-        <h1>${trenutniKorisnik?.first_name || ""} ${trenutniKorisnik?.last_name || ""}</h1>
-        <p class="muted">${trenutniKorisnik?.email || ""}</p>
-      </div>
-      <button type="button" class="btn-odjava-top" onclick="odjavaKorisnika()">Odjava</button>
-    </div>
+    main.innerHTML = `
+        <section class="app-shell admin-shell">
+            <div class="role-header">
+                <span class="role-badge admin">Admin</span>
+                <h1>${trenutniKorisnik?.first_name || ""} ${trenutniKorisnik?.last_name || ""}</h1>
+                <p>${trenutniKorisnik?.email || ""}</p>
+                <button class="btn btn-outline-danger btn-sm" onclick="odjavaKorisnika()">Odjava</button>
+            </div>
 
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <h2>Upravljanje terminima</h2>
-          <p class="muted">Pregled svih termina. Kreiranje, uređivanje i brisanje.</p>
-        </div>
-        <div class="terms-actions">
-          <button type="button" class="secondary-button" onclick="ucitajAdminTermine()">↺ Osvježi</button>
-          <button type="button" onclick="otvoriFormuKreiranje()">+ Novi termin</button>
-        </div>
-      </div>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Upravljanje terminima</h2>
+                        <p>Pregled svih termina. Kreiranje, uređivanje i brisanje.</p>
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="ucitajAdminTermine()">↺ Osvježi</button>
+                        <button class="btn btn-primary btn-sm" onclick="otvoriFormuKreiranje()">+ Novi termin</button>
+                    </div>
+                </div>
 
-      <div id="admin-msg" class="message-box" role="status"></div>
+                <div id="termin-forma" class="form-card" style="display:none">
+                    <h3 id="forma-naslov">Novi termin</h3>
+                    <div class="form-grid">
+                        <label>Profesor (User ID)<input id="f-prof" type="number" min="1"></label>
+                        <label>Predmet (Subject ID)<input id="f-subj" type="number" min="1"></label>
+                        <label>Početak termina<input id="f-start" type="datetime-local"></label>
+                        <label>Kraj termina<input id="f-end" type="datetime-local"></label>
+                    </div>
+                    <div class="form-actions">
+                        <button id="forma-btn" class="btn btn-success btn-sm" onclick="spremiTermin()">Kreiraj</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="zatvoriFormu()">Odustani</button>
+                    </div>
+                </div>
 
-      <div id="termin-forma" class="termin-forma" style="display:none;">
-        <h3 id="forma-naslov">Novi termin</h3>
-        <div class="grid two-columns">
-          <label>Profesor (User ID)<input id="f-prof" type="number" min="1"/></label>
-          <label>Predmet (Subject ID)<input id="f-subj" type="number" min="1"/></label>
-          <label>Početak termina<input id="f-start" type="datetime-local"/></label>
-          <label>Kraj termina<input id="f-end" type="datetime-local"/></label>
-        </div>
-        <div class="actions-row" style="margin-top:14px">
-          <button id="forma-btn" type="button" onclick="spremiTermin()">Kreiraj</button>
-          <button type="button" class="secondary-button" onclick="zatvoriFormu()">Odustani</button>
-        </div>
-      </div>
+                <div id="admin-msg" class="msg-box" style="display:none"></div>
+                <div id="admin-termini-lista" class="table-wrap">Učitavanje...</div>
+            </section>
 
-      <div id="admin-termini-lista">Učitavanje...</div>
-    </div>
-  `;
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Upravljanje korisnicima</h2>
+                        <p>Promjena uloge korisnika: student, professor ili admin.</p>
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="ucitajKorisnikeZaRole()">↺ Osvježi korisnike</button>
+                    </div>
+                </div>
 
-  ucitajAdminTermine();
+                <div id="users-msg" class="msg-box" style="display:none"></div>
+                <div id="admin-users-lista" class="table-wrap">Učitavanje korisnika...</div>
+            </section>
+        </section>
+    `;
+
+    ucitajAdminTermine();
+    ucitajKorisnikeZaRole();
 }
 
 // ── ZAJEDNIČKI ────────────────────────────────────────────────
@@ -794,3 +809,150 @@ if (typeof window.renderAdminSection !== "function") {
     return null;
   };
 }
+// ── ADMIN ROLE MANAGEMENT UI ─────────────────────────────────
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function prikaziUsersMsg(message, type) {
+    const el = document.querySelector("#users-msg");
+    if (!el) return;
+
+    el.textContent = message;
+    el.dataset.type = type;
+    el.style.display = "block";
+
+    setTimeout(() => {
+        el.style.display = "none";
+    }, 4000);
+}
+
+async function ucitajKorisnikeZaRole() {
+    const container = document.querySelector("#admin-users-lista");
+    if (!container) return;
+
+    container.innerHTML = "<p>Učitavanje korisnika...</p>";
+
+    try {
+        const users = await safeApiFetch("/auth/users");
+
+        if (!Array.isArray(users) || users.length === 0) {
+            container.innerHTML = "<p>Nema korisnika za prikaz.</p>";
+            return;
+        }
+
+        container.innerHTML = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Korisnik</th>
+                        <th>Email</th>
+                        <th>Trenutna rola</th>
+                        <th>Nova rola</th>
+                        <th>Office ID</th>
+                        <th>Akcija</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${users.map(renderKorisnikRoleRow).join("")}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        container.innerHTML = `<p class="error-text">Greška: ${escapeHtml(error.message)}</p>`;
+    }
+}
+
+function renderKorisnikRoleRow(user) {
+    const userId = user.user_id ?? user.id;
+    const role = normalizeRole(user.role);
+    const officeId = user.office_id ?? "";
+
+    return `
+        <tr>
+            <td>#${escapeHtml(userId)}</td>
+            <td>${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}</td>
+            <td>${escapeHtml(user.email)}</td>
+            <td><span class="role-badge ${escapeHtml(role)}">${escapeHtml(role)}</span></td>
+            <td>
+                <select id="role-${escapeHtml(userId)}" onchange="onRoleSelectChange(${Number(userId)})">
+                    <option value="student" ${role === "student" ? "selected" : ""}>student</option>
+                    <option value="professor" ${role === "professor" ? "selected" : ""}>professor</option>
+                    <option value="admin" ${role === "admin" ? "selected" : ""}>admin</option>
+                </select>
+            </td>
+            <td>
+                <input
+                    id="office-${escapeHtml(userId)}"
+                    type="number"
+                    min="1"
+                    value="${escapeHtml(officeId)}"
+                    placeholder="office_id"
+                    ${role === "professor" ? "" : "disabled"}
+                >
+            </td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="spremiKorisnickuRolu(${Number(userId)})">
+                    Spremi rolu
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+function onRoleSelectChange(userId) {
+    const roleSelect = document.querySelector(`#role-${userId}`);
+    const officeInput = document.querySelector(`#office-${userId}`);
+
+    if (!roleSelect || !officeInput) return;
+
+    const role = normalizeRole(roleSelect.value);
+    officeInput.disabled = role !== "professor";
+
+    if (role !== "professor") {
+        officeInput.value = "";
+    }
+}
+
+async function spremiKorisnickuRolu(userId) {
+    const roleSelect = document.querySelector(`#role-${userId}`);
+    const officeInput = document.querySelector(`#office-${userId}`);
+
+    if (!roleSelect) return;
+
+    const role = normalizeRole(roleSelect.value);
+    const payload = { role };
+
+    if (role === "professor") {
+        const officeId = Number.parseInt(officeInput?.value, 10);
+
+        if (!officeId) {
+            prikaziUsersMsg("Za rolu professor moraš unijeti office_id.", "error");
+            return;
+        }
+
+        payload.office_id = officeId;
+    }
+
+    try {
+        await safeApiFetch(`/auth/users/${userId}/role`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+
+        prikaziUsersMsg(`Rola korisnika #${userId} je ažurirana.`, "ok");
+        await ucitajKorisnikeZaRole();
+    } catch (error) {
+        prikaziUsersMsg(`Promjena role nije uspjela: ${error.message}`, "error");
+    }
+}
+
+window.ucitajKorisnikeZaRole = ucitajKorisnikeZaRole;
+window.spremiKorisnickuRolu = spremiKorisnickuRolu;
+window.onRoleSelectChange = onRoleSelectChange;
