@@ -763,7 +763,7 @@ async function ucitajKorisnike() {
                   <option value="professor" ${u.role === "professor" ? "selected" : ""}>professor</option>
                   <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
                 </select>
-                <button type="button" class="secondary-button" onclick="promijeniRolu(${userId})">Spremi</button>
+                <button type="button" class="secondary-button" onclick="spremiKorisnickuRolu(${userId})">Spremi</button>
               </td>
             </tr>`;
           }).join("")}
@@ -774,7 +774,7 @@ async function ucitajKorisnike() {
   }
 }
 
-async function promijeniRolu(userId) {
+async function spremiKorisnickuRolu(userId) {
   const select = document.querySelector(`#role-select-${userId}`);
   if (!select) return;
   const role = select.value;
@@ -791,7 +791,7 @@ async function promijeniRolu(userId) {
 }
 
 window.ucitajKorisnike = ucitajKorisnike;
-window.promijeniRolu = promijeniRolu;
+window.spremiKorisnickuRolu = spremiKorisnickuRolu;
 
 
 window.registerOverlay = registerOverlay;

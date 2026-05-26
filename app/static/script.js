@@ -162,8 +162,10 @@ function renderLoggedIn(user) {
 }
 
 function renderLoggedOut() {
-  const pill = document.querySelector("#navbar-current-user");
-  if (pill) { pill.textContent = "Niste prijavljeni"; pill.className = "user-pill"; }
+  if (navbarCurrentUser) {
+    navbarCurrentUser.textContent = "Niste prijavljeni";
+    navbarCurrentUser.classList.remove("logged-in");
+  }
 
   const badge = document.querySelector("#navbar-role-badge");
   if (badge) badge.style.display = "none";
